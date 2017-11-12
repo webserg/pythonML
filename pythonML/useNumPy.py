@@ -36,3 +36,18 @@ for l in range(1, 3):
     print(l)
 print(np.zeros((1, 2)))
 print(np.random.rand(1, 2))
+kk = np.array([0, 0, 0, 1, 1, 5, 6])
+print(kk[0:5])
+
+a = np.array([1,2,3,1,2,1,1,1,3,2,2,1])
+print(a)
+counts = np.bincount(a)
+print(counts)
+print(np.argmax(counts))
+
+
+z1 = np.array([1,2,3,1,2])
+print(z1.shape)
+z2 = np.arange(3*5).reshape((3, 5))
+print(z2)
+print(np.subtract(z1, z2))
