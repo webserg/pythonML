@@ -1,0 +1,7 @@
+wikipedia/target
+*/target
+*/*/target
+*/.idea
+*.iml
+/pythonML/notebooks/courseraML/week2/.ipynb_checkpoints/
+/pythonML/notebooks/courseraML/.ipynb_checkpoints/
