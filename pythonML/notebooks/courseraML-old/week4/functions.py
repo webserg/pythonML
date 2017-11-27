@@ -125,14 +125,14 @@ def predict(Theta1, Theta2, X):
     return p
 
 
-def activation(Theta1, Theta2, X):
+def activation(W1, W2, X):
     # PREDICT Predict the label of an input given a trained neural network
     #   p = PREDICT(Theta1, Theta2, X) outputs the predicted label of X given the
     #   trained weights of a neural network (Theta1, Theta2)
 
     # Useful values
     m = X.shape[0]
-    num_labels = Theta2.shape[0]
+    num_labels = W2.shape[0]
 
     # % You need to return the following variables correctly
     p = np.zeros((m, 1))
@@ -141,9 +141,9 @@ def activation(Theta1, Theta2, X):
     #               your learned neural network. You should set p to a
     #               vector containing labels between 1 to num_labels.
     a1 = X
-    z2 = np.dot(a1, Theta1.T)  + np.ones((m, 1))
+    z2 = np.dot(a1, W1.T) + np.ones((m, 1))
     a2 = sigmoid(z2)
-    z3 = np.dot(a2, Theta2.T)
+    z3 = np.dot(a2, W2.T)
     a3 = sigmoid(z3)  # probability for every number 5000 x 10
 
     cache = {"a1": a1,
