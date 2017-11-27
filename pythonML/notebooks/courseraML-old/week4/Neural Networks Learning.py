@@ -68,7 +68,7 @@ res = (np.count_nonzero(pred == np.array(y).reshape(m)) / m) * 100
 
 print('Training Set Accuracy: in ' + str(res) + '%')
 
-for i in random.sample(range(5000), 4 * num_labels):
+for i in random.sample(range(5000), num_labels):
     r = pred[i]
     res = 'The predicted value is ' + str(r) + ', actual y is ' + str(y[i]) + '...'
     print(res)
