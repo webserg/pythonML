@@ -22,30 +22,28 @@ def sigmoid_backward(dA, cache):
     return dZ
 
 
-def backprop(m, yvec, Theta1, Theta2, X):
-    Theta1_grad = np.zeros(Theta1.shape)
-    Theta2_grad = np.zeros(Theta2.shape)
-
-    cache = activation(Theta1, Theta2, X)
-    sigma3 = cache["a3"] - yvec
-    grad_Tmp = np.dot(Theta2.T, sigma3.T)
+def backprop(m, yvec, W2, cache):
+    sigma3 = cache["a3"] - yvec.T
+    grad_Tmp = np.dot(W2.T, sigma3)
 
     sigGrad = sigmoidGradient(cache["z2"])
-    sigma2 = grad_Tmp.T * sigGrad
+    sigma2 = grad_Tmp * sigGrad
     a1 = cache["a1"]
-    delta1 = np.dot(sigma2.T, a1)
-    Theta1_grad = Theta1_grad + delta1
+    delta1 = np.dot(sigma2, a1.T)
+    W1_grad = delta1
 
     a2 = cache["a2"]
-    delta2 = np.dot(sigma3.T,a2)
-    Theta2_grad = Theta2_grad + delta2
+    delta2 = np.dot(sigma3, a2.T)
+    W2_grad = delta2
 
-    Theta1_grad = Theta1_grad / m
-    Theta2_grad = Theta2_grad / m
-    return (Theta1_grad, Theta2_grad)
+    W1_grad = W1_grad / m
+    db1 = 1 / m * np.sum(sigma2)
+    W2_grad = W2_grad / m
+    db2 = 1 / m * np.sum(sigma3)
+    return (W1_grad, W2_grad, db1, db2)
 
 
-def optimize(Theta1, Theta2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd, num_iterations,
+def optimize(W1, W2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd, num_iterations,
              print_cost=True):
     """
     This function optimizes w and b by running a gradient descent algorithm
@@ -72,20 +70,22 @@ def optimize(Theta1, Theta2, input_layer_size, hidden_layer_size, num_labels, X,
 
     costs = []
 
-    w1 = Theta1
-    w2 = Theta2
+    w1 = W1
+    w2 = W2
     m = X.shape[0]
     for i in range(num_iterations):
 
         # Cost and gradient calculation (≈ 1-4 lines of code)
 
-        J, cache = nnCostFunction(w1, w2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd)
+        J, cache = nnCostFunction(w1, w2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd)
 
-        (dw1, dw2) = backprop(m, yVec, w1, w2, X)
+        (dw1, dw2, db1, db2) = backprop(m, yVec, w2, cache)
 
         w1 = w1 - lambd * dw1
+        b1 = b1 - lambd * db1
 
         w2 = w2 - lambd * dw2
+        b2 = b2 - lambd * db2
 
         # Record the costs
         if i % 100 == 0:
@@ -95,16 +95,16 @@ def optimize(Theta1, Theta2, input_layer_size, hidden_layer_size, num_labels, X,
         if print_cost and i % 100 == 0:
             print("Cost after iteration %i: %f" % (i, J))
 
-    return w1, w2
+    return w1, w2, b1, b2
 
 
-def nnCostFunction(Theta1, Theta2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd):
+def nnCostFunction(W1, W2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd):
     m = X.shape[0]
-    cache = activation(Theta1, Theta2, X)
+    cache = activation(W1, W2, b1, b2, X)
     A = cache["a3"]
-    cost = - 1 / m * np.sum(yVec * np.log(A) + (1 - yVec) * np.log(1 - A))
-    reg = regularization(Theta1, Theta2, m, lambd)
-    return (cost , cache)
+    cost = - 1 / m * np.sum(yVec.T * np.log(A) + (1 - yVec.T) * np.log(1 - A))
+    # reg = regularization(W1, W2, m, lambd)
+    return (cost, cache)
 
 
 def regularization(Theta1, Theta2, m, lambd):
@@ -118,14 +118,14 @@ def sigmoidGradient(z):
     return g
 
 
-def predict(Theta1, Theta2, X):
-    a3 = activation(Theta1, Theta2, X)["a3"]
-    ix = np.argmax(a3, axis=1)  # found max probability 5000 x 1
+def predict(W1, W2, b1, b2, X):
+    a3 = activation(W1, W2, b1, b2, X)["a3"]
+    ix = np.argmax(a3, axis=0)  # found max probability 5000 x 1
     p = ix  # indexes started from zero, but in data everything start from one, ten means zero in array y
     return p
 
 
-def activation(W1, W2, X):
+def activation(W1, W2, b1, b2, X):
     # PREDICT Predict the label of an input given a trained neural network
     #   p = PREDICT(Theta1, Theta2, X) outputs the predicted label of X given the
     #   trained weights of a neural network (Theta1, Theta2)
@@ -140,15 +140,17 @@ def activation(W1, W2, X):
     # Instructions: Complete the following code to make predictions using
     #               your learned neural network. You should set p to a
     #               vector containing labels between 1 to num_labels.
-    a1 = X
-    z2 = np.dot(a1, W1.T) + np.ones((m, 1))
+    a1 = X.T
+    z2 = np.dot(W1, a1) + b1
     a2 = sigmoid(z2)
-    z3 = np.dot(a2, W2.T)
+    z3 = np.dot(W2, a2) + b2
     a3 = sigmoid(z3)  # probability for every number 5000 x 10
 
     cache = {"a1": a1,
+             "b1": b1,
              "z2": z2,
              "a2": a2,
+             "b2": b2,
              "a3": a3}
     return cache
 
