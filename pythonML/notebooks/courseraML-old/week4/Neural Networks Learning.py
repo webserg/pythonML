@@ -3,14 +3,14 @@ import random
 import matplotlib.image as mpimg
 import numpy as np
 import scipy.io
-from functions import initialize_parameters
-from functions import nnCostFunction
-from functions import optimize
-from functions import predict
-from functions import sigmoidGradient
+from functions import *
+# from functions import nnCostFunction
+# from functions import optimize
+# from functions import predict
+# from functions import sigmoidGradient
 from matplotlib import pyplot as plt
 
-show_image = True
+show_image = False
 mat_dict = scipy.io.loadmat('./data/ex4data1.mat')
 X = mat_dict['X']
 print(X.shape)
@@ -35,7 +35,6 @@ imgplot = plt.imshow(img)
 if show_image:
     plt.show()
 
-
 # % Weight regularization parameter (we set this to 0 here).
 input_layer_size = 400  # % 20x20 Input Images of Digits
 hidden_layer_size = 25  # % 25 hidden units
@@ -44,9 +43,11 @@ lambd = 1
 
 parameters = initialize_parameters(input_layer_size, hidden_layer_size, num_labels)
 print(parameters["W1"].shape)
-Theta1 = parameters["W1"]
-print(Theta1.shape)
-Theta2 = parameters["W2"]
+W1 = parameters["W1"]
+b1 = parameters["b1"]
+print(W1.shape)
+W2 = parameters["W2"]
+b2 = parameters["b2"]
 
 yVec = np.zeros((m, num_labels))  # each number became bit vector
 for l in range(m):
@@ -55,14 +56,14 @@ for l in range(m):
         idx = 0
     yVec[l, idx] = 1
 
-J, cache = nnCostFunction(Theta1, Theta2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd)
+J, cache = nnCostFunction(W1, W2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd)
 print('Cost at parameters (loaded from ex4weights): ' + str(J) + ' (this value should be about 0.287629)')
 print(sigmoidGradient(0))
 assert (sigmoidGradient(0) == 0.25)
 
-w1, w2 = optimize(Theta1, Theta2, input_layer_size, hidden_layer_size, num_labels, X, yVec, 1, 3000, True)
+w1, w2, b1, b2 = optimize(W1, W2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, 1, 4000, True)
 
-pred = predict(w1, w2, X)
+pred = predict(w1, w2, b1, b2, X)
 
 res = (np.count_nonzero(pred == np.array(y).reshape(m)) / m) * 100
 
@@ -75,4 +76,3 @@ for i in random.sample(range(5000), num_labels):
     plt.imshow(X[i].reshape((20, 20)).T, cmap='gray', interpolation='bicubic')  # interpolation = 'bicubic'
     if show_image:
         plt.show()
-
