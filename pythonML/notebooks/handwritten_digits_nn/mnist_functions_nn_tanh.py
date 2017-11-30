@@ -265,7 +265,7 @@ def main():
     print(sigmoidGradient(0))
     assert (sigmoidGradient(0) == 0.25)
 
-    parameters = optimize(parameters, X, yVec, lambd, 2500, True)
+    parameters = optimize(parameters, X, yVec, lambd, 5000, True)
 
     pred = predict(parameters, X)
 
