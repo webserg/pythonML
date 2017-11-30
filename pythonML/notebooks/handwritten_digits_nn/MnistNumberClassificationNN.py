@@ -4,39 +4,35 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-def loadData():
-    show_image = True
-    from mnist import MNIST
-    mndata = MNIST('C:/git/pythonML/pythonML/data/MNIST')
-    images, labels = mndata.load_training()
-    # images, labels = mndata.load_testing()
-    print(type(images))
-    index = random.randrange(0, len(images))  # choose an index ;-)
-    print(mndata.display(images[index]))
-    print(labels[index])
-    plt.imshow(np.array(images[index]).reshape((28, 28)), cmap='gray',
-               interpolation='bicubic')  # interpolation = 'bicubic'
-    if show_image:
-        plt.show()
-    return images, labels
-
-
 class NeuralNetwork:
-    def __init__(self, X, Y, n_x, n_h, n_y):
-        self.X = X
-        self.Y = Y
+    def __init__(self, size_of_image):
         self.cache = {"w1": 1}
-        self.input_layer_size = n_x  # % 20x20 Input Images of Digits
-        self.hidden_layer_size = n_h  # % 25 hidden units
-        self.num_labels = n_y  # % 10 labels, from 0 to 9
+        self.show_image = False
+        from mnist import MNIST
+        mndata = MNIST('C:/git/pythonML/pythonML/data/MNIST')
+        images, labels = mndata.load_training()
+        # images, labels = mndata.load_testing()
+        print(type(images))
+        index = random.randrange(0, len(images))  # choose an index ;-)
+        print(mndata.display(images[index]))
+        print(labels[index])
+        self.X = np.array(images)
+        plt.imshow(self.X[index].reshape((size_of_image, size_of_image)), cmap='gray',
+                   interpolation='bicubic')  # interpolation = 'bicubic'
+        if self.show_image:
+            plt.show()
+        self.Y = np.array(labels)
+        self.num_labels = 10
         self.lambd = 1
+        self.hidden_layer_size = 25
+        self.input_layer_size = size_of_image * size_of_image
 
     def sigmoid(self, z):
         s = 1 / (1 + np.exp(-z))
         return s
 
     def sigmoidGradient(self, z):
-        s = sigmoid(z)
+        s = self.sigmoid(z)
         g = s * (1 - s)
         return g
 
@@ -118,11 +114,25 @@ class NeuralNetwork:
         return parameters
 
     def main(self):
-        print(self.cache["w1"])
+        parameters = self.initialize_parameters(self.input_layer_size, self.hidden_layer_size, self.num_labels)
+        print("W1 shape =" + str(parameters["W1"].shape))
+        print("b1 shape =" + str(parameters["b1"].shape))
+        print("W2 shape =" + str(parameters["W2"].shape))
+        print("b2 shape =" + str(parameters["b2"].shape))
+        m = self.X.shape[0]
+        nl = self.num_labels
+        yVec = np.zeros((m, nl))  # each number became bit vector
+        for l in range(m):
+            idx = self.Y[l]  # set bit according to index
+            yVec[l, idx] = 1
+
+        assert yVec.shape == (m, nl)
+        print(self.sigmoidGradient(0))
+        assert (self.sigmoidGradient(0) == 0.25)
 
 
 if __name__ == '__main__':
-    loadData()
-    # nn = NeuralNetwork(3)
+    nn = NeuralNetwork(28)
+    nn.main()
+
     # nn.initialize_parameters()
-    # nn.main()
