@@ -3,8 +3,8 @@ import random
 import matplotlib.image as mpimg
 import numpy as np
 import scipy.io
-from functions import *
-# from functions import nnCostFunction
+import functions as fn
+from functions import nnCostFunction
 # from functions import optimize
 # from functions import predict
 # from functions import sigmoidGradient
@@ -25,7 +25,8 @@ print(m)
 print(X[1].shape)
 print(X[1].reshape((20, 20)).shape)
 for i in random.sample(range(5000), 2):
-    plt.imshow(X[i].reshape((20, 20)).T, cmap='gray', interpolation='bicubic')  # interpolation = 'bicubic'
+    plt.imshow(X[i].reshape((20, 20)).T, cmap='gray',
+               interpolation='bicubic')  # interpolation = 'bicubic'
     print(y[i])
     if show_image:
         plt.show()
@@ -41,7 +42,8 @@ hidden_layer_size = 25  # % 25 hidden units
 num_labels = 10  # % 10 labels, from 0 to 9
 lambd = 1
 
-parameters = initialize_parameters(input_layer_size, hidden_layer_size, num_labels)
+parameters = fn.initialize_parameters(
+    input_layer_size, hidden_layer_size, num_labels)
 print(parameters["W1"].shape)
 W1 = parameters["W1"]
 b1 = parameters["b1"]
@@ -56,14 +58,16 @@ for l in range(m):
         idx = 0
     yVec[l, idx] = 1
 
-J, cache = nnCostFunction(W1, W2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd)
-print('Cost at parameters (loaded from ex4weights): ' + str(J) + ' (this value should be about 0.287629)')
-print(sigmoidGradient(0))
-assert (sigmoidGradient(0) == 0.25)
+J, cache = fn.nnCostFunction(W1, W2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, lambd)
+print('Cost at parameters (loaded from ex4weights): ' +
+      str(J) + ' (this value should be about 0.287629)')
+print(fn.sigmoidGradient(0))
+assert (fn.sigmoidGradient(0) == 0.25)
 
-w1, w2, b1, b2 = optimize(W1, W2, b1, b2, input_layer_size, hidden_layer_size, num_labels, X, yVec, 1, 4000, True)
+w1, w2, b1, b2 = fn.optimize(W1, W2, b1, b2, input_layer_size,
+                             hidden_layer_size, num_labels, X, yVec, 1, 1000, True)
 
-pred = predict(w1, w2, b1, b2, X)
+pred = fn.predict(w1, w2, b1, b2, X)
 
 res = (np.count_nonzero(pred == np.array(y).reshape(m)) / m) * 100
 
@@ -71,8 +75,10 @@ print('Training Set Accuracy: in ' + str(res) + '%')
 
 for i in random.sample(range(5000), num_labels):
     r = pred[i]
-    res = 'The predicted value is ' + str(r) + ', actual y is ' + str(y[i]) + '...'
+    res = 'The predicted value is ' + \
+        str(r) + ', actual y is ' + str(y[i]) + '...'
     print(res)
-    plt.imshow(X[i].reshape((20, 20)).T, cmap='gray', interpolation='bicubic')  # interpolation = 'bicubic'
+    plt.imshow(X[i].reshape((20, 20)).T, cmap='gray',
+               interpolation='bicubic')  # interpolation = 'bicubic'
     if show_image:
         plt.show()
