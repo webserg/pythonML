@@ -24,17 +24,18 @@ def sigmoid_backward(dA, cache):
 
 def backprop(m, yvec, W2, cache):
     sigma3 = cache["a3"] - yvec.T
-    grad_Tmp = np.dot(W2.T, sigma3)
-
-    sigGrad = sigmoidGradient(cache["z2"])
-    sigma2 = grad_Tmp * sigGrad
-    a1 = cache["a1"]
-    delta1 = np.dot(sigma2, a1.T)
-    W1_grad = delta1
 
     a2 = cache["a2"]
     delta2 = np.dot(sigma3, a2.T)
     W2_grad = delta2
+
+    sigGrad = sigmoidGradient(cache["z2"])
+
+    sigma2 = np.dot(W2.T, sigma3) * sigGrad
+
+    a1 = cache["a1"]
+    delta1 = np.dot(sigma2, a1.T)
+    W1_grad = delta1
 
     W1_grad = W1_grad / m
     db1 = 1 / m * np.sum(sigma2)
