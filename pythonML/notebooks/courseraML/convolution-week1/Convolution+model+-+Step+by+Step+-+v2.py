@@ -30,19 +30,20 @@
 # - [matplotlib](http://matplotlib.org) is a library to plot graphs in Python.
 # - np.random.seed(1) is used to keep all the random function calls consistent. It will help us grade your work.
 
-# In[1]:
+# In[18]:
+
 
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
 
-get_ipython().magic('matplotlib inline')
+# get_ipython().run_line_magic('matplotlib', 'inline')
 plt.rcParams['figure.figsize'] = (5.0, 4.0) # set default size of plots
 plt.rcParams['image.interpolation'] = 'nearest'
 plt.rcParams['image.cmap'] = 'gray'
 
-get_ipython().magic('load_ext autoreload')
-get_ipython().magic('autoreload 2')
+# get_ipython().run_line_magic('load_ext', 'autoreload')
+# get_ipython().run_line_magic('autoreload', '2')
 
 np.random.seed(1)
 
@@ -94,7 +95,8 @@ np.random.seed(1)
 # a = np.pad(a, ((0,0), (1,1), (0,0), (3,3), (0,0)), 'constant', constant_values = (..,..))
 # ```
 
-# In[ ]:
+# In[19]:
+
 
 # GRADED FUNCTION: zero_pad
 
@@ -112,13 +114,14 @@ def zero_pad(X, pad):
     """
     
     ### START CODE HERE ### (≈ 1 line)
-    X_pad = None
+    X_pad = np.pad(X, ((0,0), (pad,pad), (pad,pad),(0,0)), 'constant')
     ### END CODE HERE ###
     
     return X_pad
 
 
-# In[ ]:
+# In[20]:
+
 
 np.random.seed(1)
 x = np.random.randn(4, 3, 3, 2)
@@ -199,7 +202,8 @@ axarr[1].imshow(x_pad[0,:,:,0])
 # **Exercise**: Implement conv_single_step(). [Hint](https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.sum.html).
 # 
 
-# In[ ]:
+# In[21]:
+
 
 # GRADED FUNCTION: conv_single_step
 
@@ -219,17 +223,18 @@ def conv_single_step(a_slice_prev, W, b):
 
     ### START CODE HERE ### (≈ 2 lines of code)
     # Element-wise product between a_slice and W. Do not add the bias yet.
-    s = None
+    s = a_slice_prev * W
     # Sum over all entries of the volume s.
-    Z = None
+    Z = np.sum(s)
     # Add bias b to Z. Cast b to a float() so that Z results in a scalar value.
-    Z = None
+    Z = Z + b
     ### END CODE HERE ###
 
     return Z
 
 
-# In[ ]:
+# In[22]:
+
 
 np.random.seed(1)
 a_slice_prev = np.random.randn(4, 4, 3)
@@ -284,7 +289,8 @@ print("Z =", Z)
 # 
 # For this exercise, we won't worry about vectorization, and will just implement everything with for-loops.
 
-# In[ ]:
+# In[35]:
+
 
 # GRADED FUNCTION: conv_forward
 
@@ -305,43 +311,42 @@ def conv_forward(A_prev, W, b, hparameters):
     
     ### START CODE HERE ###
     # Retrieve dimensions from A_prev's shape (≈1 line)  
-    (m, n_H_prev, n_W_prev, n_C_prev) = None
+    (m, n_H_prev, n_W_prev, n_C_prev) = A_prev.shape
     
     # Retrieve dimensions from W's shape (≈1 line)
-    (f, f, n_C_prev, n_C) = None
+    (f, f, n_C_prev, n_C) = W.shape
     
     # Retrieve information from "hparameters" (≈2 lines)
-    stride = None
-    pad = None
+    stride = hparameters["stride"]
+    pad = hparameters["pad"]
     
     # Compute the dimensions of the CONV output volume using the formula given above. Hint: use int() to floor. (≈2 lines)
-    n_H = None
-    n_W = None
+    n_H = int((n_H_prev - f + 2 * pad) / stride) + 1
+    n_W = int((n_W_prev - f + 2 * pad) / stride) + 1
     
     # Initialize the output volume Z with zeros. (≈1 line)
-    Z = None
+    Z = np.zeros((m, n_H, n_W, n_C))
     
     # Create A_prev_pad by padding A_prev
-    A_prev_pad = None
+    A_prev_pad = zero_pad(A_prev, pad)
     
-    for i in range(None):                               # loop over the batch of training examples
-        a_prev_pad = None                               # Select ith training example's padded activation
-        for h in range(None):                           # loop over vertical axis of the output volume
-            for w in range(None):                       # loop over horizontal axis of the output volume
-                for c in range(None):                   # loop over channels (= #filters) of the output volume
+    for i in range(m):                               # loop over the batch of training examples
+        a_prev_pad = A_prev_pad[i]                               # Select ith training example's padded activation
+        for h in range(0, n_H):  # loop over vertical axis of the output volume
+            for w in range(0, n_W):                       # loop over horizontal axis of the output volume
+                for c in range(n_C):                   # loop over channels (= #filters) of the output volume
                     
                     # Find the corners of the current "slice" (≈4 lines)
-                    vert_start = None
-                    vert_end = None
-                    horiz_start = None
-                    horiz_end = None
+                    vert_start = w * stride
+                    vert_end = w *stride + f
+                    horiz_start = h *stride
+                    horiz_end = h *stride+ f
                     
                     # Use the corners to define the (3D) slice of a_prev_pad (See Hint above the cell). (≈1 line)
-                    a_slice_prev = None
+                    a_slice_prev = a_prev_pad[horiz_start:horiz_end,vert_start:vert_end,:]
                     
                     # Convolve the (3D) slice with the correct filter W and bias b, to get back one output neuron. (≈1 line)
-                    Z[i, h, w, c] = None
-                                        
+                    Z[i, h, w, c] = conv_single_step(a_slice_prev, W[:,:,:,c], b[:,:,:, c])
     ### END CODE HERE ###
     
     # Making sure your output shape is correct
@@ -353,7 +358,8 @@ def conv_forward(A_prev, W, b, hparameters):
     return Z, cache
 
 
-# In[ ]:
+# In[36]:
+
 
 np.random.seed(1)
 A_prev = np.random.randn(10,4,4,3)
@@ -366,8 +372,8 @@ Z, cache_conv = conv_forward(A_prev, W, b, hparameters)
 print("Z's mean =", np.mean(Z))
 print("Z[3,2,1] =", Z[3,2,1])
 print("cache_conv[0][1][2][3] =", cache_conv[0][1][2][3])
-
-
+print(Z)
+print("end")
 # **Expected Output**:
 # 
 # <table>
@@ -445,6 +451,7 @@ print("cache_conv[0][1][2][3] =", cache_conv[0][1][2][3])
 
 # In[1]:
 
+
 # GRADED FUNCTION: pool_forward
 
 def pool_forward(A_prev, hparameters, mode = "max"):
@@ -509,6 +516,7 @@ def pool_forward(A_prev, hparameters, mode = "max"):
 
 
 # In[ ]:
+
 
 np.random.seed(1)
 A_prev = np.random.randn(2, 4, 4, 3)
@@ -610,6 +618,7 @@ print("A =", A)
 
 # In[ ]:
 
+
 def conv_backward(dZ, cache):
     """
     Implement the backward propagation for a convolution function
@@ -689,6 +698,7 @@ def conv_backward(dZ, cache):
 
 # In[ ]:
 
+
 np.random.seed(1)
 dA, dW, db = conv_backward(Z, cache_conv)
 print("dA_mean =", np.mean(dA))
@@ -756,6 +766,7 @@ print("db_mean =", np.mean(db))
 
 # In[ ]:
 
+
 def create_mask_from_window(x):
     """
     Creates a mask from an input matrix x, to identify the max entry of x.
@@ -775,6 +786,7 @@ def create_mask_from_window(x):
 
 
 # In[ ]:
+
 
 np.random.seed(1)
 x = np.random.randn(2,3)
@@ -831,6 +843,7 @@ print("mask = ", mask)
 
 # In[ ]:
 
+
 def distribute_value(dz, shape):
     """
     Distributes the input value in the matrix of dimension shape
@@ -859,6 +872,7 @@ def distribute_value(dz, shape):
 
 # In[ ]:
 
+
 a = distribute_value(2, (2,2))
 print('distributed value =', a)
 
@@ -885,6 +899,7 @@ print('distributed value =', a)
 # **Exercise**: Implement the `pool_backward` function in both modes (`"max"` and `"average"`). You will once again use 4 for-loops (iterating over training examples, height, width, and channels). You should use an `if/elif` statement to see if the mode is equal to `'max'` or `'average'`. If it is equal to 'average' you should use the `distribute_value()` function you implemented above to create a matrix of the same shape as `a_slice`. Otherwise, the mode is equal to '`max`', and you will create a mask with `create_mask_from_window()` and multiply it by the corresponding value of dZ.
 
 # In[ ]:
+
 
 def pool_backward(dA, cache, mode = "max"):
     """
@@ -958,6 +973,7 @@ def pool_backward(dA, cache, mode = "max"):
 
 
 # In[ ]:
+
 
 np.random.seed(1)
 A_prev = np.random.randn(5, 5, 3, 2)

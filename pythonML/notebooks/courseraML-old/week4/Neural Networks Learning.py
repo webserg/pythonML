@@ -65,7 +65,7 @@ print(fn.sigmoidGradient(0))
 assert (fn.sigmoidGradient(0) == 0.25)
 
 w1, w2, b1, b2 = fn.optimize(W1, W2, b1, b2, input_layer_size,
-                             hidden_layer_size, num_labels, X, yVec, 1, 1000, True)
+                             hidden_layer_size, num_labels, X, yVec, 1, 5000, True)
 
 pred = fn.predict(w1, w2, b1, b2, X)
 
