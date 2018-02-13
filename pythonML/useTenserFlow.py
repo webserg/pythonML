@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 # Model parameters
 W = tf.Variable([.3], dtype=tf.float32)
@@ -27,3 +28,13 @@ for i in range(1000):
 # evaluate training accuracy
 curr_W, curr_b, curr_loss = sess.run([W, b, loss], {x: x_train, y: y_train})
 print("W: %s b: %s loss: %s" % (curr_W, curr_b, curr_loss))
+
+with sess.as_default():
+    rank_three_tensor = tf.ones([3, 4, 5])
+    matrix = tf.ones([2])
+    print(matrix[1].eval())
+    print(matrix.eval())
+    filter_m = (matrix.eval() == 1.0)
+    print(filter_m)
+    ff = (np.array([0.9, 0.3, 0.4, 0.5, 0.1]) <= 0.4)
+    print(ff)
