@@ -22,6 +22,7 @@ def next_batch(batch_size, n_steps):
     return ys[:, :-1].reshape(-1, n_steps, 1), ys[:, 1:].reshape(-1, n_steps, 1)
 
 
+xt, yt = next_batch(50, 20)
 # To plot pretty figures
 # %matplotlib inline
 import matplotlib
@@ -89,7 +90,6 @@ stacked_rnn_outputs = tf.reshape(rnn_outputs, [-1, n_neurons])
 stacked_outputs = tf.layers.dense(stacked_rnn_outputs, n_outputs)
 outputs = tf.reshape(stacked_outputs, [-1, n_steps, n_outputs])
 
-
 loss = tf.reduce_mean(tf.square(outputs - y))
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 training_op = optimizer.minimize(loss)
@@ -100,6 +100,8 @@ saver = tf.train.Saver()
 
 n_iterations = 1500
 batch_size = 50
+
+X_batch, y_batch = next_batch(batch_size, n_steps)
 
 with tf.Session() as sess:
     init.run()
@@ -113,22 +115,19 @@ with tf.Session() as sess:
     X_new = time_series(np.array(t_instance[:-1].reshape(-1, n_steps, n_inputs)))
     y_pred = sess.run(outputs, feed_dict={X: X_new})
 
-
-    saver.save(sess, "./my_time_series_model") # not shown in the book
-
+    saver.save(sess, "./my_time_series_model")  # not shown in the book
 
 plt.title("Testing the model", fontsize=14)
 plt.plot(t_instance[:-1], time_series(t_instance[:-1]), "bo", markersize=10, label="instance")
 plt.plot(t_instance[1:], time_series(t_instance[1:]), "w*", markersize=10, label="target")
-plt.plot(t_instance[1:], y_pred[0,:,0], "r.", markersize=10, label="prediction")
+plt.plot(t_instance[1:], y_pred[0, :, 0], "r.", markersize=10, label="prediction")
 plt.legend(loc="upper left")
 plt.xlabel("Time")
 
 plt.show()
 
-
-with tf.Session() as sess:                        # not shown in the book
-    saver.restore(sess, "./my_time_series_model") # not shown
+with tf.Session() as sess:  # not shown in the book
+    saver.restore(sess, "./my_time_series_model")  # not shown
 
     sequence = [0.] * n_steps
     for iteration in range(300):
