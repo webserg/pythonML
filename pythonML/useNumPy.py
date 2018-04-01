@@ -63,3 +63,7 @@ print(np.hstack((a, b)))
 #       [2, 3],
 #       [3, 4]])
 print(np.exp(a))
+
+z = np.zeros((10, 10))
+z[0,(2,4,6,8)] = 1
+print(z)
