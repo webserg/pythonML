@@ -1,5 +1,4 @@
 import numpy as np
-from random import shuffle
 from past.builtins import xrange
 
 
@@ -65,26 +64,24 @@ def softmax_loss_vectorized(W, X, y, reg):
     # regularization!                                                           #
     #############################################################################
     num_train = X.shape[0]
-
+    # loss
+    # score: N by C matrix containing class scores
     scores = X.dot(W)
-    scores -= np.max(scores)
+    scores -= scores.max()
     scores = np.exp(scores)
-    corrects = scores[range(num_train), y]
-    scores_sums=np.sum(scores, axis=1)
-    loss = np.sum(np.log(corrects / scores_sums)) * -1
-    loss /= num_train
-    loss += reg * np.sum(W * W)
+    scores_sums = np.sum(scores, axis=1)
+    cors = scores[range(num_train), y]
+    loss = cors / scores_sums
+    loss = np.sum(np.log(loss))/num_train + reg * np.sum(W * W) * -1
 
     # grad
-    grad = scores_sums / corrects
-    print(grad.shape)
-    Grad[y,np.arange(num_train)] += -1.0
-    print(grad.shape)
-    print(X.shape)
-    dW = X.dot(grad) / float(num_train) + reg*W
+    s = np.divide(scores, scores_sums.reshape(num_train, 1))
+    s[range(num_train), y] = - (scores_sums - cors) / scores_sums
+    dW = X.T.dot(s)
+    dW /= num_train
+    dW += 2 * reg * W
     #############################################################################
     #                          END OF YOUR CODE                                 #
     #############################################################################
 
-    return loss, dW
-
+    return loss, dW.T
