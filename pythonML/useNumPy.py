@@ -67,3 +67,7 @@ print(np.exp(a))
 z = np.zeros((10, 10))
 z[0,(2,4,6,8)] = 1
 print(z)
+
+for l in range(0
+        , 3):
+    print(l)
