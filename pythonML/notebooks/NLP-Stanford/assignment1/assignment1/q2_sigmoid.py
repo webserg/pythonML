@@ -7,7 +7,6 @@ def sigmoid(x):
     """
 
     ### YOUR CODE HERE
-    # x_norm = x.T - np.max(x.T, axis=0)
     x_norm = -x
     e = np.exp(x_norm)
     x = 1 / (1 + e)
