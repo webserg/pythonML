@@ -4,7 +4,7 @@
 
 import numpy as np
 
-epochs = 800                         # Number of iterations
+epochs = 3000                         # Number of iterations
 inputLayerSize, hiddenLayerSize, outputLayerSize = 2, 3, 1
 L = .1                                          # learning rate
 
@@ -24,7 +24,7 @@ bz = np.random.uniform(size = (outputLayerSize,1))
 for i in range(epochs):
     #forward propagation
     H = tanh(X.dot(Wh) + bh)                  # hidden layer results
-    Z = np.dot(H,Wz) + bz                            # output layer, no activation
+    Z = tanh(np.dot(H,Wz) + bz)                            # output layer, no activation
     E = Y - Z                                   # how much we missed (error)
 
     #backward prop of output layer
@@ -40,3 +40,10 @@ for i in range(epochs):
     Wh +=  X.T.dot(dH)                          # update hidden layer weights
 
 print(Z)                # what have we learnt?
+
+# test
+X = np.array([[1, 1], [0, 1], [1, 0], [0, 1]])
+H = tanh(np.dot(X, Wh) + bh)  # hidden layer results
+Z = tanh(np.dot(H, Wz) + bz)  # output layer results
+
+print(Z)

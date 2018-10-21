@@ -1,7 +1,7 @@
 #   XOR.py-A very simple neural network to do exclusive or.
 import numpy as np
 
-epochs = 60000           # Number of iterations
+epochs = 30000           # Number of iterations
 inputLayerSize, hiddenLayerSize, outputLayerSize = 2, 3, 1
 
 X = np.array([[0,0], [0,1], [1,0], [1,1]])
@@ -23,4 +23,11 @@ for i in range(epochs):
     Wz +=  H.T.dot(dZ)                          # update output layer weights
     Wh +=  X.T.dot(dH)                          # update hidden layer weights
 
-print(Z)                # what have we learnt?
+print(Z) # what have we learnt?
+
+#test
+X = np.array([[1,1], [0,1], [1,0], [0,1]])
+H = sigmoid(np.dot(X, Wh))                  # hidden layer results
+Z = sigmoid(np.dot(H, Wz))                  # output layer results
+
+print(Z)

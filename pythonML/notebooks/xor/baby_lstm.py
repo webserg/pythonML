@@ -2,7 +2,7 @@ from keras.layers import LSTM, Dense, Dropout
 from keras.models import Sequential
 import pandas as pd
 import numpy as np
-
+#http://barnesanalytics.com/using-lstm-networks-in-keras-to-predict-baby-name-popularity
 df = pd.read_csv('C:/git/pythonML/pythonML/data/names/yob2016.txt',header=None)
 df = df.sample(frac=1)
 

@@ -19,9 +19,9 @@ print('Build model...')
 model = Sequential()
 model.add(GRU(output_dim = 1, input_length = 8, input_dim = 2, return_sequences=True))
 model.add(Dropout(0.2))
-model.add(Dense(256))
+model.add(Dense(64))
 # model.add(Dense(1))
-model.add(TimeDistributed(Dense(1, activation='sigmoid')))
+model.add(TimeDistributed(Dense(1, activation='tanh')))
 model.compile(loss = 'mae', optimizer = 'adam', metrics = ['accuracy'])
 
 
