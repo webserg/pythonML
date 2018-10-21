@@ -4,7 +4,7 @@
 
 import numpy as np
 
-epochs = 1000                         # Number of iterations
+epochs = 800                         # Number of iterations
 inputLayerSize, hiddenLayerSize, outputLayerSize = 2, 3, 1
 L = .1                                          # learning rate
 
@@ -12,7 +12,9 @@ X = np.array([[0,0], [0,1], [1,0], [1,1]])
 Y = np.array([ [0],   [1],   [1],   [0]])
 
 def sigmoid (x): return 1/(1 + np.exp(-x))      # activation function
+def tanh (x): return np.tanh(x)      # activation function
 def sigmoid_(x): return x * (1 - x)             # derivative of sigmoid
+def tanh_(x): return 1 - x**2             # derivative of tanh
 # weights on layer inputs
 Wh = np.random.uniform(size=(inputLayerSize, hiddenLayerSize))
 Wz = np.random.uniform(size=(hiddenLayerSize,outputLayerSize))
@@ -21,7 +23,7 @@ bz = np.random.uniform(size = (outputLayerSize,1))
 
 for i in range(epochs):
     #forward propagation
-    H = sigmoid(X.dot(Wh) + bh)                  # hidden layer results
+    H = tanh(X.dot(Wh) + bh)                  # hidden layer results
     Z = np.dot(H,Wz) + bz                            # output layer, no activation
     E = Y - Z                                   # how much we missed (error)
 
@@ -32,7 +34,7 @@ for i in range(epochs):
     bz += dbZ
 
     #backward prop of hidden layer
-    dH = dZ.dot(Wz.T) * sigmoid_(H)            # delta H
+    dH = dZ.dot(Wz.T) * tanh_(H)            # delta H
     dbH = np.sum(dH)
     bh += dbH
     Wh +=  X.T.dot(dH)                          # update hidden layer weights
