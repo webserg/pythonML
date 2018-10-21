@@ -1,40 +1,52 @@
 #   XOR.py-A very simple neural network to do exclusive or.
 #   sigmoid activation for hidden layer, no (or linear) activation for output
-#http://python3.codes/neural-network-python-part-1-sigmoid-function-gradient-descent-backpropagation/
+# http://python3.codes/neural-network-python-part-1-sigmoid-function-gradient-descent-backpropagation/
 
 import numpy as np
 
-epochs = 1000                         # Number of iterations
+epochs = 10000  # Number of iterations
 inputLayerSize, hiddenLayerSize, outputLayerSize = 2, 3, 1
-L = .1                                          # learning rate
+L = .1  # learning rate
 
-X = np.array([[0,0], [0,1], [1,0], [1,1]])
-Y = np.array([ [0],   [1],   [1],   [0]])
+X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+Y = np.array([[0], [1], [1], [0]])
 
-def sigmoid (x): return 1/(1 + np.exp(-x))      # activation function
-def sigmoid_(x): return x * (1 - x)             # derivative of sigmoid
+
+def sigmoid(x): return 1 / (1 + np.exp(-x))  # activation function
+
+
+def sigmoid_(x): return x * (1 - x)  # derivative of sigmoid
+
+
 # weights on layer inputs
 Wh = np.random.uniform(size=(inputLayerSize, hiddenLayerSize))
-Wz = np.random.uniform(size=(hiddenLayerSize,outputLayerSize))
-bh = np.random.uniform(size = (X.shape[0],1))
-bz = np.random.uniform(size = (outputLayerSize,1))
+Wz = np.random.uniform(size=(hiddenLayerSize, outputLayerSize))
+bh = np.random.uniform(size=(X.shape[0], 1))
+bz = np.random.uniform(size=(outputLayerSize, 1))
 
 for i in range(epochs):
-    #forward propagation
-    H = sigmoid(X.dot(Wh) + bh)                  # hidden layer results
-    Z = np.dot(H,Wz) + bz                            # output layer, no activation
-    E = Y - Z                                   # how much we missed (error)
+    # forward propagation
+    H = sigmoid(X.dot(Wh) + bh)  # hidden layer results
+    Z = sigmoid(np.dot(H, Wz) + bz)  # output layer, no activation
+    E = Y - Z  # how much we missed (error)
 
-    #backward prop of output layer
-    dZ = E * L                                  # delta Z
+    # backward prop of output layer
+    dZ = E * L  # delta Z
     dbZ = np.sum(E) * L
-    Wz +=  H.T.dot(dZ)                          # update output layer weights
+    Wz += H.T.dot(dZ)  # update output layer weights
     bz += dbZ
 
-    #backward prop of hidden layer
-    dH = dZ.dot(Wz.T) * sigmoid_(H)            # delta H
+    # backward prop of hidden layer
+    dH = dZ.dot(Wz.T) * sigmoid_(H)  # delta H
     dbH = np.sum(dH)
     bh += dbH
-    Wh +=  X.T.dot(dH)                          # update hidden layer weights
+    Wh += X.T.dot(dH)  # update hidden layer weights
 
-print(Z)                # what have we learnt?
+print(Z)  # what have we learnt?
+
+# test
+X = np.array([[1, 1], [0, 1], [1, 0], [0, 1]])
+H = sigmoid(np.dot(X, Wh) + bh)  # hidden layer results
+Z = sigmoid(np.dot(H, Wz) + bz)  # output layer results
+
+print(Z)
