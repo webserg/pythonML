@@ -30,8 +30,8 @@ X = [9, 4, -2]
 
 a0 = np.array([0.0])
 a1, y1 = rnn_cell(a0, np.array(X[0:1]), Waa, Wax, Way, ba, by)
-print(a1)
+print("a1=%8.8f, y1=%8.8f" % (a1, y1))
 a2, y2 = rnn_cell(a1, np.array(X[1:2]), Waa, Wax, Way, ba, by)
-print(a2)
+print("a2=%8.8f, y2=%8.8f" % (a2, y2))
 a3, y3 = rnn_cell(a2, np.array(X[2:3]), Waa, Wax, Way, ba, by)
-print(a3)
+print("a3=%8.8f, y3=%8.8f" % (a3, y3))
