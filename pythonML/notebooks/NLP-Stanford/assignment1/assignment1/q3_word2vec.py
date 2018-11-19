@@ -10,17 +10,17 @@ def normalizeRows(x):
     # Implement a function that normalizes each row of a matrix to have unit length
     
     ### YOUR CODE HERE
-    x = x / np.sqrt((np.sum(x**2)))
+    norm = np.linalg.norm(x, axis=1)
+    return x / np.reshape(norm, [x.shape[0], 1])
     ### END YOUR CODE
-    
-    return x
 
 def test_normalize_rows():
     print("Testing normalizeRows...")
     x = normalizeRows(np.array([[3.0,4.0],[1, 2]])) 
     # the result should be [[0.6, 0.8], [0.4472, 0.8944]]
     print(x)
-    assert (x.all() == np.array([[0.6, 0.8], [0.4472, 0.8944]]).all())
+    ans = np.array([[0.6,0.8],[0.4472136,0.89442719]])
+    assert np.allclose(x, ans, rtol=1e-05, atol=1e-06)
     print("")
 
 def softmaxCostAndGradient(predicted, target, outputVectors, dataset):
