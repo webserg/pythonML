@@ -1,6 +1,6 @@
 import numpy as np
 from math import sqrt
-from past.builtins import xrange
+#from past.builtins import xrange
 
 
 class KNearestNeighbor(object):
