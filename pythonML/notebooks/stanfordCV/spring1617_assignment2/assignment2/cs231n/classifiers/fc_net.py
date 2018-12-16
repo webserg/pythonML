@@ -291,9 +291,9 @@ class FullyConnectedNet(object):
 
         for idx in range(self.num_layers - 1, -1, -1):
             if idx == self.num_layers - 1:
-                dout, dw, db = affine_backward(dout, cache[idx])
+                dout, dw, db = affine_backward(dout, cache.pop())
             else:
-                dout, dw, db = affine_relu_backward(dout, cache[idx])
+                dout, dw, db = affine_relu_backward(dout, cache.pop())
             grads['W' + str(idx + 1)] = dw + self.reg * self.params['W' + str(idx + 1)]
             grads['b' + str(idx + 1)] = db
 
