@@ -209,7 +209,12 @@ class FullyConnectedNet(object):
         # pass of the second batch normalization layer, etc.
         self.bn_params = []
         if self.use_batchnorm:
+            dims = np.hstack((input_dim, hidden_dims, num_classes))
             self.bn_params = [{'mode': 'train'} for i in range(self.num_layers - 1)]
+            for i in range(self.num_layers - 1):
+                self.params['gamma%d' % (i + 1)] = np.ones(dims[i+1])
+                self.params['beta%d' % (i + 1)] = np.zeros(dims[i+1])
+
 
         # Cast all parameters to the correct datatype
         for k, v in self.params.items():
@@ -254,7 +259,10 @@ class FullyConnectedNet(object):
             if idx + 1 == self.num_layers:
                 out, c = affine_forward(h, W, b)
             else:
-                h, c = affine_relu_forward(h, W, b)
+                if self.use_batchnorm:
+                    h, c = affine_relu_forward_batchnorm(h, W, b, self.params['gamma%d' % (idx + 1)], self.params['beta%d' % (idx + 1)], self.bn_params[idx])
+                else:
+                    h, c = affine_relu_forward(h, W, b)
             cache.append(c)
 
         scores = out
@@ -293,7 +301,12 @@ class FullyConnectedNet(object):
             if idx == self.num_layers - 1:
                 dout, dw, db = affine_backward(dout, cache.pop())
             else:
-                dout, dw, db = affine_relu_backward(dout, cache.pop())
+                if self.use_batchnorm:
+                    dout, dw, db, dgamma, dbeta = affine_relu_backward_batchnorm(dout, cache.pop())
+                    grads['gamma' +str (idx + 1)] = dgamma
+                    grads['beta' +str(idx + 1)] = dbeta
+                else:
+                    dout, dw, db = affine_relu_backward(dout, cache.pop())
             grads['W' + str(idx + 1)] = dw + self.reg * self.params['W' + str(idx + 1)]
             grads['b' + str(idx + 1)] = db
 
