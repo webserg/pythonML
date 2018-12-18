@@ -125,10 +125,10 @@ def adam(x, dx, config=None):
     - t: Iteration number.
     """
     if config is None: config = {}
-    config.setdefault('learning_rate', 1e-3)
+    learning_rate = config.setdefault('learning_rate', 1e-3)
     beta1 = config.setdefault('beta1', 0.9)
     beta2 = config.setdefault('beta2', 0.999)
-    config.setdefault('epsilon', 1e-8)
+    epsilon = config.setdefault('epsilon', 1e-8)
     m = config.setdefault('m', np.zeros_like(x))
     config.setdefault('v', np.zeros_like(x))
     config.setdefault('t', 1)
@@ -143,8 +143,8 @@ def adam(x, dx, config=None):
     config['m'] = beta1 * config['m'] + (1 - beta1) * dx
     mt = config['m'] / (1 - beta1 ** config['t'])
     config['v'] = beta2 * config['v'] + (1 - beta2) * (dx ** 2)
-    vt = config['v'] / (1 - config['beta2'] ** config['t'])
-    next_x = x - config['learning_rate'] * mt / (np.sqrt(vt) + config['epsilon'])
+    vt = config['v'] / (1 - beta2 ** config['t'])
+    next_x = x - learning_rate * mt / (np.sqrt(vt) + epsilon)
 
     ###########################################################################
     #                             END OF YOUR CODE                            #
