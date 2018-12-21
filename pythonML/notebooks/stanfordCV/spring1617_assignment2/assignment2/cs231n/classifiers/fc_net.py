@@ -2,6 +2,7 @@ from builtins import object
 from builtins import range
 
 import numpy as np
+import math
 from cs231n.layer_utils import *
 from cs231n.layers import *
 
@@ -186,7 +187,7 @@ class FullyConnectedNet(object):
                 h_dim = num_classes
             else:
                 h_dim = hidden_dims[idx]
-            self.params['W' + str(idx + 1)] = weight_scale * np.random.randn(prev_dim, h_dim)
+            self.params['W' + str(idx + 1)] = np.random.randn(prev_dim, h_dim) * math.sqrt(2.0/prev_dim)
             self.params['b' + str(idx + 1)] = np.zeros(h_dim)
             prev_dim = h_dim
         ############################################################################
@@ -258,12 +259,16 @@ class FullyConnectedNet(object):
             W, b = self.params['W' + str(idx + 1)], self.params['b' + str(idx + 1)]
             if idx + 1 == self.num_layers:
                 out, c = affine_forward(h, W, b)
+                cache.append(c)
             else:
                 if self.use_batchnorm:
                     h, c = affine_relu_forward_batchnorm(h, W, b, self.params['gamma%d' % (idx + 1)], self.params['beta%d' % (idx + 1)], self.bn_params[idx])
                 else:
                     h, c = affine_relu_forward(h, W, b)
-            cache.append(c)
+                cache.append(c)
+                if self.use_dropout:
+                    h, c = dropout_forward(h, self.dropout_param)
+                    cache.append(c)
 
         scores = out
         ############################################################################
@@ -301,6 +306,8 @@ class FullyConnectedNet(object):
             if idx == self.num_layers - 1:
                 dout, dw, db = affine_backward(dout, cache.pop())
             else:
+                if self.use_dropout:
+                    dout = dropout_backward(dout, cache.pop())
                 if self.use_batchnorm:
                     dout, dw, db, dgamma, dbeta = affine_relu_backward_batchnorm(dout, cache.pop())
                     grads['gamma' +str (idx + 1)] = dgamma
