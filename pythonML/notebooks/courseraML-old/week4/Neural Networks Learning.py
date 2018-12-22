@@ -5,12 +5,12 @@ import numpy as np
 import scipy.io
 import functions as fn
 from functions import nnCostFunction
-# from functions import optimize
-# from functions import predict
-# from functions import sigmoidGradient
+from functions import optimize
+from functions import predict
+from functions import sigmoidGradient
 from matplotlib import pyplot as plt
 
-show_image = False
+show_image = True
 mat_dict = scipy.io.loadmat('./data/ex4data1.mat')
 X = mat_dict['X']
 print(X.shape)
