@@ -1,4 +1,5 @@
 from builtins import range
+
 import numpy as np
 
 
@@ -25,7 +26,7 @@ def affine_forward(x, w, b):
     # TODO: Implement the affine forward pass. Store the result in out. You   #
     # will need to reshape the input into rows.                               #
     ###########################################################################
-    out = np.dot(x.reshape(x.shape[0],np.prod(x[0].shape)), w) + b
+    out = np.dot(x.reshape(x.shape[0], np.prod(x[0].shape)), w) + b
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -54,7 +55,7 @@ def affine_backward(dout, cache):
     # TODO: Implement the affine backward pass.                               #
     ###########################################################################
     dx = np.dot(dout, w.T).reshape(x.shape)
-    dw = np.dot(x.reshape(x.shape[0],np.prod(x[0].shape)).T, dout)
+    dw = np.dot(x.reshape(x.shape[0], np.prod(x[0].shape)).T, dout)
     db = np.sum(dout, axis=0)
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -251,7 +252,7 @@ def batchnorm_backward(dout, cache):
     dx_hat = dout * gamma
     dxmu1 = dx_hat * 1 / np.sqrt(var + eps)
     divar = np.sum(dx_hat * (x - mu), axis=0)
-    dvar = divar * -1 / 2 * (var + eps) ** (-3/2)
+    dvar = divar * -1 / 2 * (var + eps) ** (-3 / 2)
     dsq = 1 / N * np.ones((N, D)) * dvar
     dxmu2 = 2 * (x - mu) * dsq
     dx1 = dxmu1 + dxmu2
@@ -327,7 +328,7 @@ def dropout_forward(x, dropout_param):
         # Store the dropout mask in the mask variable.                        #
         #######################################################################
         mask = (np.random.rand(*x.shape) < p) / p
-        out = x*mask
+        out = x * mask
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -335,7 +336,7 @@ def dropout_forward(x, dropout_param):
         #######################################################################
         # TODO: Implement the test phase forward pass for inverted dropout.   #
         #######################################################################
-        out=x
+        out = x
         #######################################################################
         #                            END OF YOUR CODE                         #
         #######################################################################
@@ -362,13 +363,25 @@ def dropout_backward(dout, cache):
         #######################################################################
         # TODO: Implement training phase backward pass for inverted dropout   #
         #######################################################################
-        dx = dout*mask
+        dx = dout * mask
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
     elif mode == 'test':
         dx = dout
     return dx
+
+
+def zero_pad(X, pad):
+    X_pad = np.pad(X, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant')
+    return X_pad
+
+
+def conv_single_step(a_slice_prev, W, b):
+    s = a_slice_prev * W
+    Z = np.sum(s)
+    Z = Z + b
+    return Z
 
 
 def conv_forward_naive(x, w, b, conv_param):
@@ -399,7 +412,23 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    (N, C, H, W) = x.shape
+    (F, C, HH, WW) = w.shape
+    stride = conv_param["stride"]
+    pad = conv_param["pad"]
+    H_out = 1 + (H + 2 * pad - HH) // stride
+    W_out = 1 + (W + 2 * pad - WW) // stride
+    out = np.zeros((N, F, H_out, W_out))
+    x_pad = zero_pad(x, pad)
+    for n in range(N):
+        for f in range(F):
+            for h_out in range(H_out):
+                for w_out in range(W_out):
+                    h_start = h_out * stride
+                    h_end = h_out * stride + HH
+                    w_start = w_out * stride
+                    w_end = w_out * stride + WW
+                    out[n, f, h_out, w_out] = conv_single_step(x_pad[n, :, h_start:h_end, w_start:w_end], w[f, :, :, :], b[f])
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
