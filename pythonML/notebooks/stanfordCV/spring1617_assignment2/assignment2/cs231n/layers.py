@@ -517,7 +517,6 @@ def max_pool_forward_naive(x, pool_param):
                 w_start = w_out * stride
                 w_end = w_out * stride + pool_width
                 max=np.max(x[n, :, h_start:h_end, w_start:w_end], axis=(-1, -2))
-                print(max)
                 out[n, :, h_out, w_out] = max
     ###########################################################################
     #                             END OF YOUR CODE                            #
@@ -541,12 +540,45 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max pooling backward pass                           #
     ###########################################################################
-    pass
+    x, pool_param = cache
+    (N, C, H, W) = x.shape
+    stride = pool_param["stride"]
+    pool_height = pool_param["pool_height"]
+    pool_width = pool_param["pool_width"]
+    H_out = 1 + (H - pool_height) // stride
+    W_out = 1 + (W - pool_width) // stride
+    dx = np.zeros(x.shape)
+    for n in range(N):
+        for f in range(C):
+            for h in range(H_out):
+                for w in range(W_out):
+                    h_start = h * stride
+                    h_end = h * stride + pool_height
+                    w_start = w * stride
+                    w_end = w * stride + pool_width
+                    mask = create_mask_from_window(x[n, f, h_start:h_end, w_start:w_end])
+                    dx[n, f, h_start:h_end, w_start:w_end] = dout[n, f, h, w] * mask
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     return dx
 
+def create_mask_from_window(x):
+    """
+    Creates a mask from an input matrix x, to identify the max entry of x.
+
+    Arguments:
+    x -- Array of shape (f, f)
+
+    Returns:
+    mask -- Array of the same shape as window, contains a True at the position corresponding to the max entry of x.
+    """
+
+    ### START CODE HERE ### (≈1 line)
+    mask = (x==np.max(x))
+    ### END CODE HERE ###
+
+    return mask
 
 def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     """
