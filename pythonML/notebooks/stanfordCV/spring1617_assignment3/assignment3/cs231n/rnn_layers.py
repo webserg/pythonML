@@ -1,7 +1,6 @@
 from __future__ import print_function, division
-from builtins import range
-import numpy as np
 
+import numpy as np
 
 """
 This file defines layer types that are commonly used for recurrent neural
@@ -34,7 +33,9 @@ def rnn_step_forward(x, prev_h, Wx, Wh, b):
     # hidden state and any values you need for the backward pass in the next_h   #
     # and cache variables respectively.                                          #
     ##############################################################################
-    pass
+    z = x.dot(Wx) + prev_h.dot(Wh) + b
+    next_h = np.tanh(z)
+    cache = (Wx, Wh, x, prev_h, z)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -63,7 +64,13 @@ def rnn_step_backward(dnext_h, cache):
     # HINT: For the tanh function, you can compute the local derivative in terms #
     # of the output value from tanh.                                             #
     ##############################################################################
-    pass
+    Wx, Wh, x, prev_h, z = cache
+    dz = dnext_h * (1 - np.tanh(z) ** 2)
+    dx = dz.dot(Wx.T)
+    dprev_h = dz.dot(Wh.T)
+    dWx = x.T.dot(dz)
+    dWh = prev_h.T.dot(dz)
+    db = np.sum(dz, axis=0)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
