@@ -1,7 +1,6 @@
-from builtins import range
 from builtins import object
-import numpy as np
 
+import numpy as np
 from cs231n.layers import *
 from cs231n.rnn_layers import *
 
@@ -74,7 +73,6 @@ class CaptioningRNN(object):
         for k, v in self.params.items():
             self.params[k] = v.astype(self.dtype)
 
-
     def loss(self, features, captions):
         """
         Compute training-time loss for the RNN. We input image features and
@@ -137,13 +135,21 @@ class CaptioningRNN(object):
         # defined above to store loss and gradients; grads[k] should give the      #
         # gradients for self.params[k].                                            #
         ############################################################################
-        pass
+        h0, cache_affine = affine_forward(features, W_proj, b_proj)
+        embeddings, cache_embed = word_embedding_forward(captions_in, W_embed)
+        h, cache_rnn = rnn_forward(embeddings, h0, Wx, Wh, b)
+        out, cache_temporal = temporal_affine_forward(h, W_vocab, b_vocab)
+        loss, dout = temporal_softmax_loss(out, captions_out, mask, verbose=True)
+
+        dout, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dout, cache_temporal)
+        dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dout, cache_rnn)
+        grads['W_embed'] = word_embedding_backward(dx, cache_embed)
+        _, grads['W_proj'], grads['b_proj'] = affine_backward(dh0, cache_affine)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
 
         return loss, grads
-
 
     def sample(self, features, max_length=30):
         """
