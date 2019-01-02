@@ -139,7 +139,7 @@ class CaptioningRNN(object):
         embeddings, cache_embed = word_embedding_forward(captions_in, W_embed)
         h, cache_rnn = rnn_forward(embeddings, h0, Wx, Wh, b)
         out, cache_temporal = temporal_affine_forward(h, W_vocab, b_vocab)
-        loss, dout = temporal_softmax_loss(out, captions_out, mask, verbose=True)
+        loss, dout = temporal_softmax_loss(out, captions_out, mask, verbose=False)
 
         dout, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dout, cache_temporal)
         dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dout, cache_rnn)
@@ -205,7 +205,14 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
+        h, _ = affine_forward(features, W_proj, b_proj)
+        word = (self._start * np.ones(N)).astype(np.int32)
+        for t in range(max_length):
+            captions[:, t] = word
+            x = W_embed[word,:]
+            h, c = rnn_step_forward(x, h, Wx, Wh, b)
+            out = h.dot(W_vocab) + b_vocab
+            word = np.argmax(out, axis=1)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
