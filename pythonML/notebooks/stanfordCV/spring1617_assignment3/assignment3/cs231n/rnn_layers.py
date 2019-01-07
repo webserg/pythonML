@@ -253,11 +253,23 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     - cache: Tuple of values needed for backward pass.
     """
     next_h, next_c, cache = None, None, None
+    N, H = prev_h.shape
     #############################################################################
     # TODO: Implement the forward pass for a single timestep of an LSTM.        #
     # You may want to use the numerically stable sigmoid implementation above.  #
     #############################################################################
-    pass
+    a = x.dot(Wx) + prev_h.dot(Wh) + b
+    ai = a[:, 0:H]
+    af = a[:, H:2 * H]
+    ao = a[:, 2 * H:3 * H]
+    acandidate = a[:, 3 * H:4 * H]
+    i = sigmoid(ai)
+    f = sigmoid(af)
+    o = sigmoid(ao)
+    candidate = np.tanh(acandidate)
+    next_c = f * prev_c + i * candidate
+    next_h = o * np.tanh(next_c)
+    cache = (Wx, Wh, x, prev_h, a, i, f, o, candidate, prev_c, next_c, prev_h, next_h)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -289,7 +301,36 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     # HINT: For sigmoid and tanh you can compute local derivatives in terms of  #
     # the output value from the nonlinearity.                                   #
     #############################################################################
-    pass
+    Wx, Wh, x, prev_h, a, i, f, o, candidate, prev_c, next_c, prev_h, next_h = cache
+    N, H = prev_h.shape
+
+    do = dnext_h * np.tanh(next_c)
+    dc = dnext_h * (1 - np.tanh(next_c) ** 2) * o
+
+
+    dc += dnext_c
+    df = dc * prev_c
+    di = dc * candidate
+    dcandidate = dc * i
+
+    ai = a[:, 0:H]
+    af = a[:, H:2 * H]
+    ao = a[:, 2 * H:3 * H]
+    acandidate = a[:, 3 * H:4 * H]
+
+    daf = sigmoid(af) * (1 - sigmoid(af)) * df
+    dai = sigmoid(ai) * (1 - sigmoid(ai)) * di
+    dao = sigmoid(ao) * (1 - sigmoid(ao)) * do
+    dacandidate = (1 - np.tanh(acandidate)**2) * dcandidate
+
+    dprev_c = dc * f
+
+    da = np.hstack((dai, daf, dao, dacandidate))
+    dprev_h = np.dot(da,Wh.T)
+    dWx = np.dot(x.T, da)
+    dWh = np.dot(prev_h.T, da)
+    dx = np.dot(da, Wx.T)
+    db = np.sum(da, axis=0, keepdims=False)
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
