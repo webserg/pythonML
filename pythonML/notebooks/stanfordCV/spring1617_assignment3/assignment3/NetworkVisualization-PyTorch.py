@@ -186,11 +186,17 @@ def compute_saliency_maps(X, y, model):
     # to each input image. You first want to compute the loss over the correct   #
     # scores, and then compute the gradients with a backward pass.               #
     ##############################################################################
-
+    scores = model(X_var)
+    scores = scores.gather(1, y_var.view(-1, 1)).squeeze()
+    loss = -torch.sum(torch.log(scores))
+    loss.backward()
+    saliency = X_var.grad.data
+    saliency = saliency.abs()
+    saliency, idx = saliency.max(dim=1)
     ##############################################################################
     #                             END OF YOUR CODE                               #
     ##############################################################################
-    return saliency
+    return saliency.squeeze()
 
 
 # Once you have completed the implementation in the cell above, run the following to visualize some class saliency maps on our example images from the ImageNet validation set:
