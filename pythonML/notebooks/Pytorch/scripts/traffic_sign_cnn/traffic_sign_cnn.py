@@ -20,4 +20,4 @@ class TrafficSignDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, self.labels[idx]
+        return image, int(self.labels[idx])
