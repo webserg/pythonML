@@ -11,7 +11,7 @@ seq_length = 20
 # generate evenly spaced data pts
 time_steps = np.linspace(0, np.pi, seq_length + 1)
 data = np.sin(time_steps)
-data.resize((seq_length + 1, 1)) # size becomes (seq_length+1, 1), adds an input_size dimension
+np.resize(data,(seq_length + 1, 1)) # size becomes (seq_length+1, 1), adds an input_size dimension
 
 x = data[:-1] # all but the last piece of data
 y = data[1:] # all but the first

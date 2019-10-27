@@ -137,12 +137,22 @@ class CaptioningRNN(object):
         ############################################################################
         h0, cache_affine = affine_forward(features, W_proj, b_proj)
         embeddings, cache_embed = word_embedding_forward(captions_in, W_embed)
-        h, cache_rnn = rnn_forward(embeddings, h0, Wx, Wh, b)
+
+        if self.cell_type == 'rnn':
+            h, cache_rnn = rnn_forward(embeddings, h0, Wx, Wh, b)
+        elif self.cell_type == 'lstm':
+            h, cache_lstm = lstm_forward(embeddings, h0, Wx, Wh, b)
+
         out, cache_temporal = temporal_affine_forward(h, W_vocab, b_vocab)
         loss, dout = temporal_softmax_loss(out, captions_out, mask, verbose=False)
 
         dout, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dout, cache_temporal)
-        dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dout, cache_rnn)
+
+        if self.cell_type == 'rnn':
+            dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = rnn_backward(dout, cache_rnn)
+        elif self.cell_type == 'lstm':
+            dx, dh0, grads['Wx'], grads['Wh'], grads['b'] = lstm_backward(dout, cache_lstm)
+
         grads['W_embed'] = word_embedding_backward(dx, cache_embed)
         _, grads['W_proj'], grads['b_proj'] = affine_backward(dh0, cache_affine)
         ############################################################################
@@ -207,10 +217,14 @@ class CaptioningRNN(object):
         ###########################################################################
         h, _ = affine_forward(features, W_proj, b_proj)
         word = (self._start * np.ones(N)).astype(np.int32)
+        prev_c = np.zeros((h.shape))
         for t in range(max_length):
             captions[:, t] = word
             x = W_embed[word,:]
-            h, c = rnn_step_forward(x, h, Wx, Wh, b)
+            if self.cell_type == 'rnn':
+                h, _ = rnn_step_forward(x, h, Wx, Wh, b)
+            elif self.cell_type == 'lstm':
+                h, prev_c, _ = lstm_step_forward(x, h, prev_c, Wx, Wh, b)
             out = h.dot(W_vocab) + b_vocab
             word = np.argmax(out, axis=1)
         ############################################################################
