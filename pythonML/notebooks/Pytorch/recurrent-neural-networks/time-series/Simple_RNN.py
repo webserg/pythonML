@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import numpy as np
 import matplotlib.pyplot as plt
-get_ipython().run_line_magic('matplotlib', 'inline')
+
 plt.figure(figsize=(8,5))
 
 # how many time steps/data pts are in one batch of data
