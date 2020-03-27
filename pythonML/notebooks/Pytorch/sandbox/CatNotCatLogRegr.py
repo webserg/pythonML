@@ -106,7 +106,7 @@ if __name__ == '__main__':
             Y_prediction = outputs.to(device, torch.long)
             total = labels.size(0)
             correct = (Y_prediction == labels).sum().item()
-            print('Accuracy of the network on the 10000 test images: {} %'.format(correct / total))
+            print('Accuracy of the network on the {} test images: {} %'.format(total, correct / total))
 
     # Save the model checkpoint
     torch.save(model.state_dict(), 'pytorch_one_layer_LR.ckpt')
