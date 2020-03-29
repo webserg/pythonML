@@ -2,7 +2,9 @@ import numpy as np
 a = np.zeros((10, 2))
 b = a.T
 c = b.view()
-print(a.reshape((2),-1))
+print(a)
+print(a.reshape(2, -1))
+print(a.reshape(-1, 2))
 a = np.arange(6)
 print(a)
 print(a.reshape((3, 2)))
