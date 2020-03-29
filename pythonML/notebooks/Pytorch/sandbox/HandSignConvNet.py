@@ -22,9 +22,13 @@ class HandSignConvNet(nn.Module):
         self.pool1 = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(in_channels=12, out_channels=24, kernel_size=5, padding=2)
         self.pool2 = nn.MaxPool2d(2, 2)
-        self.fc1 = nn.Linear(24 * 16 * 16, 256)
-        self.fc2 = nn.Linear(256, num_classes)
+        self.fc1 = nn.Linear(24 * 16 * 16, 512)
+        self.fc2 = nn.Linear(512, num_classes)
         self.dropout = nn.Dropout(0.2)
+
+    def init_wieghts(self):
+        torch.nn.init.xavier_uniform_(self.conv1.weight)
+        torch.nn.init.xavier_uniform_(self.conv2.weight)
 
     def forward(self, input):
         x = self.pool1(F.relu(self.conv1(input)))
@@ -33,17 +37,20 @@ class HandSignConvNet(nn.Module):
         x = self.dropout(x)
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
-        x = F.relu(self.fc2(x))
+        x = self.fc2(x)
         x = F.log_softmax(x, dim=1)
-
-
         return x
+
+    def predict(self, images):
+        outputs = self(images)
+        _, predicted = torch.max(outputs.data, 1)
+        return predicted
 
 
 class HandSignConvNetTraining():
     num_epochs = 20
     batch_size = 64
-    learning_rate = 0.009
+    learning_rate = 0.001
     momentum = 0.9
     loss_history = []
     epoch_history = []
@@ -67,11 +74,14 @@ if __name__ == '__main__':
 
     device = torch.device("cuda:0")
 
-    train_dataset = HandSignDataset('C:/git/pythonML/pythonML/notebooks/courseraML/convolution-week1/datasets/train_signs.h5', "train_set_", True)
+    train_dataset = HandSignDataset('C:/git/pythonML/pythonML/notebooks/courseraML/convolution-week1/datasets/train_signs.h5', "train_set_",
+                                    True)
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=params.batch_size, shuffle=True)
     print(train_dataset)
     model = HandSignConvNet().to(device)
-    optimizer = torch.optim.SGD(model.parameters(), lr=params.learning_rate, momentum=params.momentum)
+    model.init_wieghts()
+    # optimizer = torch.optim.SGD(model.parameters(), lr=params.learning_rate, momentum=params.momentum)
+    optimizer = torch.optim.Adam(model.parameters(), lr=params.learning_rate)
     criterion = nn.CrossEntropyLoss()
 
     total_step = len(train_loader)
@@ -103,17 +113,17 @@ if __name__ == '__main__':
     with torch.no_grad():
         correct = 0
         total = 0
-        test_dataset = HandSignDataset('C:/git/pythonML/pythonML/notebooks/courseraML/convolution-week1/datasets/test_signs.h5', "test_set_",
-                                        True)
+        test_dataset = HandSignDataset('C:/git/pythonML/pythonML/notebooks/courseraML/convolution-week1/datasets/test_signs.h5',
+                                       "test_set_",
+                                       True)
         test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=params.batch_size, shuffle=False)
         for images, labels in test_loader:
             images = images.to(device, torch.float)
             labels = labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
+            predicted = model.predict(images)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-        print('Test Accuracy of the model on the 10000 test images: {} %'.format(100 * correct / total))
+        print('Test Accuracy of the model on the {} test images: {} %'.format(total, 100 * correct / total))
 
     # Save the model checkpoint
     torch.save(model, 'pytorch_HandSign.ckpt')
