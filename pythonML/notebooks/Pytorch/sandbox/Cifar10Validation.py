@@ -37,11 +37,12 @@ if __name__ == '__main__':
     print(model)
     model.cuda()
 
-    model.load_state_dict(torch.load('model_cifar.pt'))
+    model.load_state_dict(torch.load('models/model_cifar.pt'))
     # track test loss
     test_loss = 0.0
     class_correct = list(0. for i in range(10))
     class_total = list(0. for i in range(10))
+    # criterion = nn.NLLLoss()
     criterion = nn.CrossEntropyLoss()
     model.eval()
     # iterate over test data

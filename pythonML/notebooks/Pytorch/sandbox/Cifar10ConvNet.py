@@ -1,3 +1,11 @@
+# The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class.
+# There are 50000 training images and 10000 test images.
+#
+# The dataset is divided into five training batches and one test batch, each with 10000 images.
+# The test batch contains exactly 1000 randomly-selected images from each class. The training batches contain
+# the remaining images in random order, but some training batches may contain more images from one class than another.
+# Between them, the training batches contain exactly 5000 images from each class.
+
 from torchvision import datasets
 import torchvision.transforms as transforms
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -33,7 +41,7 @@ class CifarConvNet(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
 
-        x = F.log_softmax(x, dim=1)
+        # x = F.log_softmax(x, dim=1) use only with nn.NLLLoss()
         return x
 
 
@@ -85,7 +93,6 @@ if __name__ == '__main__':
                                   download=True, transform=transform)
 
 
-    # obtain training indices that will be used for validation
     num_train = len(train_data)
     indices = list(range(num_train))
     np.random.shuffle(indices)
@@ -111,13 +118,9 @@ if __name__ == '__main__':
     images, labels = dataiter.next()
     images = images.numpy()  # convert images to numpy for display
 
-    # plot the images in the batch, along with the corresponding labels
-    fig = plt.figure(figsize=(25, 4))
-    # display 20 images
     for idx in np.arange(2):
-        ax = fig.add_subplot(2, 20 / 2, idx + 1, xticks=[], yticks=[])
         imshow(images[idx])
-        ax.set_title(classes[labels[idx]])
+        print(classes[labels[idx]])
 
     # detailedImage(images[5])
 
@@ -127,21 +130,18 @@ if __name__ == '__main__':
     model = CifarConvNet()
     print(model)
     model.cuda()
-    criterion = nn.NLLLoss()
-    # optimizer = optim.Adam(model.parameters(), lr=0.005)
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    # criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.005)
+    # optimizer = optim.SGD(model.parameters(), lr=0.01)
 
-    # number of epochs to train the model
     n_epochs = 14  # you may increase this number to train a final model
 
     valid_loss_min = np.Inf  # track change in validation loss
 
     for epoch in range(1, n_epochs + 1):
-
-        # keep track of training and validation loss
         train_loss = 0.0
         valid_loss = 0.0
-
         ###################
         # train the model #
         ###################
@@ -161,27 +161,20 @@ if __name__ == '__main__':
         ######################
         model.eval()
         for data, target in valid_loader:
-            # move tensors to GPU if CUDA is available
             data, target = data.cuda(), target.cuda()
-            # forward pass: compute predicted outputs by passing inputs to the model
             output = model(data)
-            # calculate the batch loss
             loss = criterion(output, target)
-            # update average validation loss
             valid_loss += loss.item() * data.size(0)
 
-        # calculate average losses
         train_loss = train_loss / len(train_loader.dataset)
         valid_loss = valid_loss / len(valid_loader.dataset)
 
-        # print training/validation statistics
         print('Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}'.format(
             epoch, train_loss, valid_loss))
 
-        # save model if validation loss has decreased
         if valid_loss <= valid_loss_min:
             print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(
                 valid_loss_min,
                 valid_loss))
-            torch.save(model.state_dict(), 'model_cifar.pt')
+            torch.save(model.state_dict(), 'models/model_cifar.pt')
             valid_loss_min = valid_loss
