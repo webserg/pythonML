@@ -41,7 +41,6 @@ if __name__ == '__main__':
     # criterion = nn.NLLLoss()
     criterion = nn.CrossEntropyLoss()
     model.eval()
-    # iterate over test data
     for data, target in test_loader:
         data, target = data.cuda(), target.cuda()
         output = model(data)
