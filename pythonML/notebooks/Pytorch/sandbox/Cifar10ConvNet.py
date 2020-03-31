@@ -103,13 +103,11 @@ if __name__ == '__main__':
     train_sampler = SubsetRandomSampler(train_idx)
     valid_sampler = SubsetRandomSampler(valid_idx)
 
-    # prepare data loaders (combine dataset and sampler)
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
                                                sampler=train_sampler, num_workers=num_workers)
     valid_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size,
                                                sampler=valid_sampler, num_workers=num_workers)
 
-    # specify the image classes
     classes = ['airplane', 'automobile', 'bird', 'cat', 'deer',
                'dog', 'frog', 'horse', 'ship', 'truck']
 
