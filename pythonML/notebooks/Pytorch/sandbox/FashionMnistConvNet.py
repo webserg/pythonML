@@ -82,7 +82,7 @@ class FashionMnistConvNet(nn.Module):
         x = self.dropout(x)
         x = self.fc2(x)
 
-        x = F.log_softmax(x, dim=1)
+        # x = F.log_softmax(x, dim=1)
         return x
 
 
@@ -142,9 +142,9 @@ if __name__ == '__main__':
     # If you apply Pytorch’s CrossEntropyLoss to your output layer,
     # you get the same result as applying Pytorch’s NLLLoss to a
     # LogSoftmax layer added after your original output layer.
-    criterion = nn.NLLLoss()
-    # optimizer = optim.Adam(model.parameters(), lr=0.005)
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    # optimizer = optim.SGD(model.parameters(), lr=0.01)
 
     # number of epochs to train the model
     n_epochs = 14  # you may increase this number to train a final model
@@ -192,6 +192,6 @@ if __name__ == '__main__':
             print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(
                 valid_loss_min,
                 valid_loss))
-            torch.save(model.state_dict(), 'model_fashionMnist.pt')
+            torch.save(model.state_dict(), 'models/model_fashionMnist.pt')
             valid_loss_min = valid_loss
 

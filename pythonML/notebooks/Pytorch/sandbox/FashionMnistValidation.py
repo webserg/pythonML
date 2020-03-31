@@ -40,7 +40,7 @@ if __name__ == '__main__':
     test_loss = 0.0
     class_correct = list(0. for i in range(10))
     class_total = list(0. for i in range(10))
-    criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
     model.eval()
     for data, target in test_loader:
         data, target = data.cuda(), target.cuda()
