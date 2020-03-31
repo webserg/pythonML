@@ -8,12 +8,8 @@ from pythonML.notebooks.Pytorch.sandbox.Cifar10ConvNet import CifarConvNet
 
 
 if __name__ == '__main__':
-    # number of subprocesses to use for data loading
     num_workers = 0
-    # how many samples per batch to load
     batch_size = 20
-    # percentage of training set to use as validation
-    valid_size = 0.2
 
     # convert data to a normalized torch.FloatTensor
     transform = transforms.Compose([
@@ -47,20 +43,13 @@ if __name__ == '__main__':
     model.eval()
     # iterate over test data
     for data, target in test_loader:
-        # move tensors to GPU if CUDA is available
         data, target = data.cuda(), target.cuda()
-        # forward pass: compute predicted outputs by passing inputs to the model
         output = model(data)
-        # calculate the batch loss
         loss = criterion(output, target)
-        # update test loss
         test_loss += loss.item()*data.size(0)
-        # convert output probabilities to predicted class
         _, pred = torch.max(output, 1)
-        # compare predictions to true label
         correct_tensor = pred.eq(target.data.view_as(pred))
         correct = np.squeeze(correct_tensor.cpu().numpy())
-        # calculate test accuracy for each object class
         for i in range(batch_size):
             label = target.data[i]
             class_correct[label] += correct[i].item()
