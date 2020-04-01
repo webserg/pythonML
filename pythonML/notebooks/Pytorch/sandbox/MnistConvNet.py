@@ -20,13 +20,14 @@ class MnistConvNet(nn.Module):
         self.batchNorm1 = nn.BatchNorm2d(16)
         self.batchNorm2 = nn.BatchNorm2d(32)
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-
+        self.dropout = nn.Dropout(0.2)
         self.fc = nn.Linear(7 * 7 * 32, num_classes)
 
     def forward(self, x):
         x = self.pool(F.relu(self.batchNorm1(self.conv1(x))))
         x = self.pool(F.relu(self.batchNorm2(self.conv2(x))))
         x = x.reshape(x.size(0), -1)
+        x = self.dropout(x)
         out = self.fc(x)
         return out
 
