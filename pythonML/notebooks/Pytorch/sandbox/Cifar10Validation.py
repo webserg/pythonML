@@ -11,7 +11,6 @@ if __name__ == '__main__':
     num_workers = 0
     batch_size = 20
 
-    # convert data to a normalized torch.FloatTensor
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
