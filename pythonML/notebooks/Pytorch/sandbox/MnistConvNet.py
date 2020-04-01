@@ -58,15 +58,17 @@ if __name__ == '__main__':
     batch_size = 100
     learning_rate = 0.001
 
+    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
     # MNIST dataset
-    train_dataset = torchvision.datasets.MNIST(root='../../data/',
+    train_dataset = torchvision.datasets.MNIST(root='~/.pytorch/MNIST_data/',
                                                train=True,
-                                               transform=transforms.ToTensor(),
+                                               transform=transform,
                                                download=True)
 
-    test_dataset = torchvision.datasets.MNIST(root='../../data/',
+    test_dataset = torchvision.datasets.MNIST(root='~/.pytorch/MNIST_data/',
                                               train=False,
-                                              transform=transforms.ToTensor())
+                                              transform=transform)
 
     # Data loader
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
