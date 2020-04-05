@@ -57,6 +57,7 @@ class ConvAutoencoder(nn.Module):
         ## decoder layers ##
         ## a kernel of 2 and a stride of 2 will increase the spatial dims by 2
         self.t_conv1 = nn.ConvTranspose2d(in_channels=4, out_channels=16, kernel_size=2, stride=2, padding=0)
+        self.t_conv2 = nn.ConvTranspose2d(in_channels=16, out_channels=1, kernel_size=2, stride=2, padding=0)
 
     def forward(self, x):
         ## encode ##
@@ -65,23 +66,25 @@ class ConvAutoencoder(nn.Module):
         ## decode ##
         ## apply ReLu to all hidden layers *except for the output layer
         ## apply a sigmoid to the output layer
-
+        x = F.relu(self.t_conv1(x))
+        x = self.t_conv2(x)
+        x = torch.sigmoid(x)
         return x
 
 
-class Autoencoder(nn.Module):
-    def __init__(self, encoding_dim):
-        super(Autoencoder, self).__init__()
-        ## encoder ##
-        self.input = nn.Linear(784, encoding_dim)
-        self.output = nn.Linear(encoding_dim, 784)
-
-    def forward(self, x):
-        # define feedforward behavior
-        # and scale the *output* layer with a sigmoid activation function
-        x = F.relu(self.input(x))
-        x = torch.sigmoid(self.output(x))
-        return x
+# class Autoencoder(nn.Module):
+#     def __init__(self, encoding_dim):
+#         super(Autoencoder, self).__init__()
+#         ## encoder ##
+#         self.input = nn.Linear(784, encoding_dim)
+#         self.output = nn.Linear(encoding_dim, 784)
+#
+#     def forward(self, x):
+#         # define feedforward behavior
+#         # and scale the *output* layer with a sigmoid activation function
+#         x = F.relu(self.input(x))
+#         x = torch.sigmoid(self.output(x))
+#         return x
 
 
 def showImage():
@@ -99,14 +102,12 @@ def showImage():
 if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     batch_size = 20
-    n_epochs = 15
+    n_epochs = 5
 
     # convert data to torch.FloatTensor
     transform = transforms.ToTensor()
     train_data = datasets.MNIST(root='~/.pytorch/MNIST_data/', train=True, download=True, transform=transform)
-    test_data = datasets.MNIST(root='~/.pytorch/MNIST_data/', train=False, download=True, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size)
 
     showImage()
 
@@ -122,7 +123,7 @@ if __name__ == '__main__':
         for data in train_loader:
             images, _ = data
             images = images.to(device)
-            images = images.view(images.size(0), -1)
+            # images = images.view(images.size(0), -1)
             optimizer.zero_grad()
             outputs = model(images)
             loss = criterion(outputs, images)
@@ -132,4 +133,4 @@ if __name__ == '__main__':
         train_loss = train_loss / len(train_loader)
         print('Epoch: {} \tTraining Loss: {:.6f}'.format(epoch, train_loss))
 
-    torch.save(model.state_dict(), 'models/model_ae_linear_mnist.pt')
+    torch.save(model.state_dict(), 'models/model_ae_conv_mnist.pt')
