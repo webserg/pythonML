@@ -71,3 +71,11 @@ with torch.no_grad():
     tconv.weight.data = K
     print(tconv.weight)
     print(tconv(X))
+
+
+x = torch.ones(7, 7, 4)  # new_* methods take in sizes
+print(x.shape)
+x = x.view(7*7*4,-1)
+print(x.shape)
+x = x.view(-1, 7*7*4)
+print(x.shape)

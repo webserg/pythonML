@@ -99,3 +99,5 @@ for epoch in range(num_epochs):
         out, _, _ = model(x)
         x_concat = torch.cat([x.view(-1, 1, 28, 28), out.view(-1, 1, 28, 28)], dim=3)
         save_image(x_concat, os.path.join(sample_dir, 'reconst-{}.png'.format(epoch+1)))
+
+torch.save(model.state_dict(), 'models/model_vae_linear_mnist.pt')
