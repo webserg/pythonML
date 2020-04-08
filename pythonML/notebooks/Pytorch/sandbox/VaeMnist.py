@@ -1,3 +1,5 @@
+#Variational convolutional autoencoder mnist
+#
 import argparse
 import torch
 import torch.nn as nn
@@ -28,7 +30,6 @@ class ConvAutoencoder(nn.Module):
         ## a kernel of 2 and a stride of 2 will increase the spatial dims by 2
         self.t_conv1 = nn.ConvTranspose2d(in_channels=16, out_channels=32, kernel_size=2, stride=2, padding=0)
         self.t_conv2 = nn.ConvTranspose2d(in_channels=32, out_channels=1, kernel_size=2, stride=2, padding=0)
-        # self.t_conv3 = nn.ConvTranspose2d(in_channels=32, out_channels=1, kernel_size=5, stride=5, padding=0)
 
     def reparametrize(self, mu, log_var):
         std = torch.exp(log_var / 2)
