@@ -23,31 +23,28 @@ class ConvAutoencoder(nn.Module):
         self.fc = nn.Linear(7 * 7 * 16, 7 * 7 * 8)
         self.fc1 = nn.Linear(7 * 7 * 8, z_dim)
         self.fc2 = nn.Linear(7 * 7 * 8, z_dim)
-        self.fc3 = nn.Linear(z_dim, 7*7*16)
+        self.fc3 = nn.Linear(z_dim, 7 * 7 * 16)
         ## decoder layers ##
         ## a kernel of 2 and a stride of 2 will increase the spatial dims by 2
         self.t_conv1 = nn.ConvTranspose2d(in_channels=16, out_channels=32, kernel_size=2, stride=2, padding=0)
         self.t_conv2 = nn.ConvTranspose2d(in_channels=32, out_channels=1, kernel_size=2, stride=2, padding=0)
         # self.t_conv3 = nn.ConvTranspose2d(in_channels=32, out_channels=1, kernel_size=5, stride=5, padding=0)
 
-    def reparametrize(self, mu, logvar):
-        std = logvar.mul(0.5).exp_()
-        eps = torch.cuda.FloatTensor(std.size()).normal_()
-        eps = Variable(eps)
-        return eps.mul(std).add_(mu)
+    def reparametrize(self, mu, log_var):
+        std = torch.exp(log_var / 2)
+        eps = torch.randn_like(std)
+        return mu + eps * std
 
     def forward(self, x):
         ## encode ##
-        x = self.maxPool1(F.relu(self.conv1(x)))
-        x = self.maxPool2(F.relu(self.conv2(x)))
         log_var, mu = self.encode(x)
         ## decode ##
         z = self.reparametrize(mu, log_var)
-        z = self.fc3(z)
         x = self.decode(z)
         return x, mu, log_var
 
     def decode(self, x):
+        x = self.fc3(x)
         x = x.view(-1, 16, 7, 7)
         # print(x.shape)
         x = F.relu(self.t_conv1(x))
@@ -56,6 +53,8 @@ class ConvAutoencoder(nn.Module):
         return x
 
     def encode(self, x):
+        x = self.maxPool1(F.relu(self.conv1(x)))
+        x = self.maxPool2(F.relu(self.conv2(x)))
         x_encode = x.view(-1, 7 * 7 * 16)
         x_encode = self.fc(x_encode)
         mu, log_var = self.fc1(x_encode), self.fc2(x_encode)
@@ -77,8 +76,8 @@ def showImage():
 if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     image_size = 784
-    batch_size = 20
-    num_epochs = 1
+    batch_size = 128
+    num_epochs = 20
     z_dim = 20
     sample_dir = 'vae_samples'
     if not os.path.exists(sample_dir):
@@ -120,30 +119,17 @@ if __name__ == '__main__':
                 print("Epoch[{}/{}], Step [{}/{}], Reconst Loss: {:.4f}, KL Div: {:.4f}"
                       .format(epoch + 1, num_epochs, i + 1, len(train_loader), reconst_loss.item(), kl_div.item()))
 
-        with torch.no_grad():
-            # Save the sampled images
-            z = torch.randn(batch_size, 16, 7, 7).to(device)
-            out = model.decode(z).view(-1, 1, 28, 28)
-            save_image(out, os.path.join(sample_dir, 'sampled-{}.png'.format(epoch + 1)))
-
-            # Save the reconstructed images
-            out, _, _ = model(x)
-            x_concat = torch.cat([x, out], dim=3)
-            save_image(x_concat, os.path.join(sample_dir, 'reconst-{}.png'.format(epoch + 1)))
+        # with torch.no_grad():
+        #     # Save the sampled images
+        #     z = torch.randn(batch_size, 16, 7, 7).to(device)
+        #     out = model.decode(z).view(-1, 1, 28, 28)
+        #     save_image(out, os.path.join(sample_dir, 'sampled-{}.png'.format(epoch + 1)))
+        #
+        #     # Save the reconstructed images
+        #     out, _, _ = model(x)
+        #     x_concat = torch.cat([x, out], dim=3)
+        #     save_image(x_concat, os.path.join(sample_dir, 'reconst-{}.png'.format(epoch + 1)))
 
     torch.save(model.state_dict(), 'models/model_vae_conv_mnist.pt')
 
-    # for epoch in range(1, n_epochs + 1):
-    #     train_loss = 0.0
-    #     for data in train_loader:
-    #         images, _ = data
-    #         images = images.to(device)
-    #         # images = images.view(images.size(0), -1)
-    #         optimizer.zero_grad()
-    #         outputs = model(images)
-    #         loss = criterion(outputs, images)
-    #         loss.backward()
-    #         optimizer.step()
-    #         train_loss += loss.item() * images.size(0)
-    #     train_loss = train_loss / len(train_loader)
-    #     print('Epoch: {} \tTraining Loss: {:.6f}'.format(epoch, train_loss))
+
