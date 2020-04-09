@@ -20,10 +20,73 @@ def showImage():
     ax.imshow(img, cmap='gray')
     plt.show()
 
+
+def drawPicturesonBlack():
+    pass
+    #     # plot the first ten input images and then reconstructed images
+    # fig, axes = plt.subplots(nrows=2, ncols=len(images), sharex=True, sharey=True, figsize=(25, 4))
+    #
+    # # input images on top row, reconstructions on bottom
+    # for images, row in zip([images, reconst_images], axes):
+    #     for img, ax in zip(images, row):
+    #         ax.imshow(np.squeeze(img), cmap='gray')
+    #         ax.get_xaxis().set_visible(False)
+    #         ax.get_yaxis().set_visible(False)
+
+
+def misterNcoderWall(test_data, model):
+    n_to_show = 5000
+    test_loader =torch.utils.data.DataLoader(dataset=test_data, batch_size=n_to_show, shuffle=False)
+    dataiter = iter(test_loader)
+    images, labels = dataiter.next()
+    images = images.to(device)
+    labels = labels.to(device)
+    log_var, mu = model.encode(images)
+    z_points = reparametrize(mu, log_var)
+    z_points = z_points.to('cpu').numpy()
+    figsize = 12
+
+    example_idx = np.random.choice(range(len(images)), n_to_show)
+    plt.figure(figsize=(figsize, figsize))
+    plt.scatter(z_points[:, 0], z_points[:, 1], c='black', alpha=0.5, s=10)
+
+    figsize = 8
+    plt.figure(figsize=(figsize, figsize))
+    plt.scatter(z_points[:, 0] , z_points[:, 1], c='black', alpha=0.5, s=2)
+
+
+    # grid_size = 20
+    # grid_depth = 2
+    # figsize = 15
+    #
+    # x = np.random.normal(size = grid_size)
+    # y = np.random.normal(size = grid_size)
+    #
+    # x = torch.from_numpy(x).to(device, dtype=torch.float)
+    # y = torch.from_numpy(y).to(device, dtype=torch.float)
+    # z_grid = model.reparametrize(x,y)
+    # reconst = model.decode(z_grid)
+    # reconst = reconst.to('cpu')
+    # z_grid = z_grid.to('cpu').numpy()
+    #
+    # plt.scatter(x , y, c = 'red', alpha=1, s=20)
+    #
+    # fig = plt.figure(figsize=(figsize, grid_depth))
+    # fig.subplots_adjust(hspace=0.4, wspace=0.4)
+    #
+    # for i in range(grid_size):
+    #     ax = fig.add_subplot(grid_depth, grid_size, i+1)
+    #     ax.axis('off')
+    #     ax.text(0.5, -0.35, str(np.round(z_grid[i],1)), fontsize=8, ha='center', transform=ax.transAxes)
+    #
+    #     ax.imshow(reconst[i, :,:,0], cmap = 'Greys')
+
+
 def reparametrize(mu, log_var):
     std = torch.exp(log_var / 2)
     eps = torch.randn_like(std)
     return mu + eps * std
+
 
 if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -71,17 +134,6 @@ if __name__ == '__main__':
             sub.axis('off')
             sub.imshow(img, cmap='gray_r')
 
-
-        #     # plot the first ten input images and then reconstructed images
-        # fig, axes = plt.subplots(nrows=2, ncols=len(images), sharex=True, sharey=True, figsize=(25, 4))
-        #
-        # # input images on top row, reconstructions on bottom
-        # for images, row in zip([images, reconst_images], axes):
-        #     for img, ax in zip(images, row):
-        #         ax.imshow(np.squeeze(img), cmap='gray')
-        #         ax.get_xaxis().set_visible(False)
-        #         ax.get_yaxis().set_visible(False)
+        misterNcoderWall(test_data, model)
 
         plt.show()
-
-
