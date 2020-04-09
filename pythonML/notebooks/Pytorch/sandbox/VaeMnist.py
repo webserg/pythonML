@@ -120,17 +120,6 @@ if __name__ == '__main__':
                 print("Epoch[{}/{}], Step [{}/{}], Reconst Loss: {:.4f}, KL Div: {:.4f}"
                       .format(epoch + 1, num_epochs, i + 1, len(train_loader), reconst_loss.item(), kl_div.item()))
 
-        # with torch.no_grad():
-        #     # Save the sampled images
-        #     z = torch.randn(batch_size, 16, 7, 7).to(device)
-        #     out = model.decode(z).view(-1, 1, 28, 28)
-        #     save_image(out, os.path.join(sample_dir, 'sampled-{}.png'.format(epoch + 1)))
-        #
-        #     # Save the reconstructed images
-        #     out, _, _ = model(x)
-        #     x_concat = torch.cat([x, out], dim=3)
-        #     save_image(x_concat, os.path.join(sample_dir, 'reconst-{}.png'.format(epoch + 1)))
-
     torch.save(model.state_dict(), 'models/model_vae_conv_mnist.pt')
 
 

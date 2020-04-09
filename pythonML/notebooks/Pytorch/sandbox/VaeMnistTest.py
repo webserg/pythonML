@@ -54,10 +54,6 @@ def misterNcoderWall(test_data, model):
     plt.figure(figsize=(figsize, figsize))
     plt.scatter(z_points[:, 0], z_points[:, 1], c='black', alpha=0.5, s=10)
 
-    figsize = 8
-    plt.figure(figsize=(figsize, figsize))
-    plt.scatter(z_points[:, 0] , z_points[:, 1], c='black', alpha=0.5, s=2)
-
 
     grid_size = 20
     grid_depth = 2
