@@ -14,7 +14,11 @@ def showImage():
     images, labels = dataiter.next()
     images = images.numpy()
     # get one image from the batch
-    img = np.squeeze(images[0])
+    showOneImage(images[0])
+
+
+def showOneImage(img):
+    img = np.squeeze(img)
     fig = plt.figure(figsize=(5, 5))
     ax = fig.add_subplot(111)
     ax.imshow(img, cmap='gray')
@@ -55,31 +59,21 @@ def misterNcoderWall(test_data, model):
     plt.scatter(z_points[:, 0] , z_points[:, 1], c='black', alpha=0.5, s=2)
 
 
-    # grid_size = 20
-    # grid_depth = 2
-    # figsize = 15
-    #
-    # x = np.random.normal(size = grid_size)
-    # y = np.random.normal(size = grid_size)
-    #
-    # x = torch.from_numpy(x).to(device, dtype=torch.float)
-    # y = torch.from_numpy(y).to(device, dtype=torch.float)
-    # z_grid = model.reparametrize(x,y)
-    # reconst = model.decode(z_grid)
-    # reconst = reconst.to('cpu')
-    # z_grid = z_grid.to('cpu').numpy()
-    #
-    # plt.scatter(x , y, c = 'red', alpha=1, s=20)
-    #
-    # fig = plt.figure(figsize=(figsize, grid_depth))
-    # fig.subplots_adjust(hspace=0.4, wspace=0.4)
-    #
-    # for i in range(grid_size):
-    #     ax = fig.add_subplot(grid_depth, grid_size, i+1)
-    #     ax.axis('off')
-    #     ax.text(0.5, -0.35, str(np.round(z_grid[i],1)), fontsize=8, ha='center', transform=ax.transAxes)
-    #
-    #     ax.imshow(reconst[i, :,:,0], cmap = 'Greys')
+    grid_size = 20
+    grid_depth = 2
+    figsize = 15
+
+    x = np.random.normal(size = grid_size )
+    y = np.random.normal(size = grid_size)
+
+    x = torch.from_numpy(x).to(device, dtype=torch.float)
+    y = torch.from_numpy(y).to(device, dtype=torch.float)
+    z_grid = model.reparametrize(x,y)
+    reconst = model.decode(z_grid)
+    reconst_images = reconst.to('cpu')
+    showOneImage(reconst_images[0])
+
+
 
 
 def reparametrize(mu, log_var):
@@ -98,7 +92,7 @@ if __name__ == '__main__':
     test_data = datasets.MNIST(root='~/.pytorch/MNIST_data/', train=False, download=True, transform=transform)
     test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size)
 
-    # showImage()
+    showImage()
 
     model = ConvAutoencoder().to(device)
     print(model)
