@@ -112,7 +112,7 @@ if __name__ == '__main__':
     d_optimizer = torch.optim.Adam(D.parameters(), lr=lr)
     g_optimizer = torch.optim.Adam(G.parameters(), lr=lr)
 
-    # criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCEWithLogitsLoss()
 
 
     def real_loss(D_out, smooth=False):
@@ -122,7 +122,6 @@ if __name__ == '__main__':
         # smooth labels if smooth=True
         if (smooth):
             labels = labels * 0.9
-        criterion = nn.BCEWithLogitsLoss()
         loss = criterion(D_out.squeeze(), labels)
         return loss
 
@@ -131,7 +130,6 @@ if __name__ == '__main__':
         # compare logits to fake labels
         batch_size = D_out.size(0)
         labels = torch.zeros(batch_size).to(device)
-        criterion = nn.BCEWithLogitsLoss()
         loss = criterion(D_out.squeeze(), labels)
         return loss
 
