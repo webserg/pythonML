@@ -22,7 +22,7 @@ class LinNet(nn.Module):
         self.output = nn.Linear(20, input_size)
 
     def forward(self, x):
-        x = F.relu(self.input(x))
+        x = F.relu(self.input(x.t()))
         x = F.relu(self.hidden(x))
         x = self.output(x)
         return x
@@ -33,7 +33,7 @@ class LinNet(nn.Module):
 
 
 def show(loss):
-    plt.scatter(loss)
+    plt.scatter(np.array(range(0, len(loss))), loss)
     plt.xlabel('iter')
     plt.ylabel('loss')
     plt.show()
@@ -41,20 +41,21 @@ def show(loss):
 
 if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    batch_size = 1
+    batch_size = 10
     n_epochs = 10
     model = LinNet(1).to(device)
     print(model)
 
-    train_data = RestoranDataset('C:/Users/webse/machineL/ex1/ex1data1.txt')
+    train_data = RestoranDataset('C:/Users/webse/machineL/ex1/ex1data1.txt', True)
+    train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size)
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
     model.train()
     train_loss = 0.0
     train_loss_history = []
     for epoch in range(1, n_epochs + 1):
-        for x, y in iter(train_data):
-            x = x.to(device).view(1, 1)
+        for x, y in iter(train_loader):
+            x = x.to(device).view(1,-1)
             optimizer.zero_grad()
             outputs = model(x)
             loss = criterion(outputs, y.to(device))
@@ -65,5 +66,5 @@ if __name__ == '__main__':
         print('Epoch: {} \tTraining Loss: {:.6f}'.format(epoch, train_loss))
         train_loss_history.append(train_loss)
 
-    show(train_loss)
+    show(train_loss_history)
     torch.save(model.state_dict(), 'models/model_linear.pt')
