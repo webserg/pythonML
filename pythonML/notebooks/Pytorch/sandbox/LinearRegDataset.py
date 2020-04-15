@@ -12,6 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 import h5py
 import matplotlib.pyplot as plt
 import pandas as pd
+from torchvision import transforms
 
 
 class RestoranDataset(torch.utils.data.Dataset):
@@ -20,7 +21,7 @@ class RestoranDataset(torch.utils.data.Dataset):
         train = pd.read_csv(file_name)
         self.x_set = torch.tensor(train.get_values()[:, 0]).float()
         if transform:
-            self.x_set = self.do_transform()
+            self.x_set = self.do_transform(self.x_set)
         self.y_set = torch.tensor(train.get_values()[:, 1]).float()
         self.transform = transform
 
@@ -39,8 +40,8 @@ class RestoranDataset(torch.utils.data.Dataset):
     def __str__(self):
         return "Number of examples: m = " + str(self.x_set.shape[0]) + "\n"
 
-    def do_transform(self):
-        return self.x_set
+    def do_transform(self, x):
+        return (x - torch.sum(x) / len(x)) / torch.std(x)
 
     def show(self):
         plt.scatter(self.x_set, self.y_set)
