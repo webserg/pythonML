@@ -3,10 +3,29 @@ import matplotlib.pyplot as plt
 import torch
 
 
+def moving_average(a, n=3):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
+
+def ewma(a, alpha, windowSize):
+    wghts = (1 - alpha) ** np.arange(windowSize)
+    wghts /= wghts.sum()
+    out = np.full(a.shape[0], np.nan)
+    out[windowSize - 1:] = np.convolve(a, wghts, 'valid')
+    return out
+
+
 def moving_average2(x, w=4):
     y = x
     y[w - 1:] = np.convolve(x, np.ones(w) * (1 / np.e), 'valid') / w
     return y
+
+
+def exp_moving_average2(x, beta):
+    v0 = 0
+    # v0 = beta * v0 + (1 - beta) * qt
 
 
 if __name__ == '__main__':
