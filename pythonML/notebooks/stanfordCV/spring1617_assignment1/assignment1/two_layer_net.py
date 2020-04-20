@@ -13,7 +13,7 @@ from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 
-from cs231n.classifiers.neural_net import TwoLayerNet
+from pythonML.notebooks.stanfordCV.assignment1.cs231n.classifiers.neural_net import TwoLayerNet
 
 
 
@@ -106,7 +106,7 @@ print(np.sum(np.abs(loss - correct_loss)))
 # In[ ]:
 
 
-from cs231n.gradient_check import eval_numerical_gradient
+from pythonML.notebooks.stanfordCV.assignment1.cs231n.gradient_check import eval_numerical_gradient
 
 # Use numeric gradient checking to check your implementation of the backward pass.
 # If your implementation is correct, the difference between the numeric and
@@ -155,7 +155,7 @@ plt.show()
 # In[ ]:
 
 
-from cs231n.data_utils import load_CIFAR10
+from pythonML.notebooks.stanfordCV.assignment1.cs231n.data_utils import load_CIFAR10
 
 def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
     """
@@ -253,7 +253,7 @@ plt.show()
 # In[ ]:
 
 
-from cs231n.vis_utils import visualize_grid
+from pythonML.notebooks.stanfordCV.assignment1.cs231n.vis_utils import visualize_grid
 
 # Visualize the weights of the network
 

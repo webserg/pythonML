@@ -71,7 +71,7 @@ class LinearClassifier(object):
             # TODO:                                                                 #
             # Update the weights using the gradient and the learning rate.          #
             #########################################################################
-            self.W -= learning_rate * grad
+            self.W = self.W - learning_rate * grad.T
             #########################################################################
             #                       END OF YOUR CODE                                #
             #########################################################################
@@ -122,7 +122,7 @@ class LinearClassifier(object):
         - loss as a single float
         - gradient with respect to self.W; an array of the same shape as W
         """
-        pass
+        return softmax_loss_vectorized(self.W, X_batch, y_batch, reg)
 
 
 class LinearSVM(LinearClassifier):
