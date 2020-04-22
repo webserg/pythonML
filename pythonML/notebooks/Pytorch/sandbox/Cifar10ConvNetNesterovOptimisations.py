@@ -14,8 +14,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 from torch import nn, optim
+from pythonML.notebooks.Pytorch.sandbox.MyOptimisation import SGD
 
 
 class CifarConvNet(nn.Module):
@@ -74,6 +74,13 @@ def detailedImage(img):
     plt.show()
 
 
+def showLoss(loss):
+    plt.plot(np.array(range(0, len(loss))), loss)
+    plt.ylabel('loss')
+    plt.xlabel('iter')
+    plt.show()
+
+
 if __name__ == '__main__':
     # number of subprocesses to use for data loading
     num_workers = 0
@@ -91,7 +98,6 @@ if __name__ == '__main__':
     # choose the training and test datasets
     train_data = datasets.CIFAR10('data', train=True,
                                   download=True, transform=transform)
-
 
     num_train = len(train_data)
     indices = list(range(num_train))
@@ -117,7 +123,7 @@ if __name__ == '__main__':
     images = images.numpy()  # convert images to numpy for display
 
     for idx in np.arange(2):
-        imshow(images[idx])
+        # imshow(images[idx])
         print(classes[labels[idx]])
 
     # detailedImage(images[5])
@@ -128,15 +134,18 @@ if __name__ == '__main__':
     model = CifarConvNet()
     print(model)
     model.cuda()
+    for param in model.parameters():
+        print(type(param.data), param.size())
     # criterion = nn.NLLLoss()
     criterion = nn.CrossEntropyLoss()
     # optimizer = optim.Adam(model.parameters(), lr=0.005)
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, nesterov=True)
+    optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9, nesterov=True)
 
-    n_epochs = 14  # you may increase this number to train a final model
+    n_epochs = 3  # you may increase this number to train a final model
 
     valid_loss_min = np.Inf  # track change in validation loss
-
+    train_loss = 0.0
+    train_loss_history = []
     for epoch in range(1, n_epochs + 1):
         train_loss = 0.0
         valid_loss = 0.0
@@ -154,25 +163,30 @@ if __name__ == '__main__':
             optimizer.step()
             train_loss += loss.item() * data.size(0)
 
+        train_loss = train_loss / len(train_loader.dataset)
+        train_loss_history.append(train_loss)
+
+        print('Epoch: {} \tTraining Loss: {:.6f}'.format(epoch, train_loss))
+
         ######################
         # validate the model #
         ######################
-        model.eval()
-        for data, target in valid_loader:
-            data, target = data.cuda(), target.cuda()
-            output = model(data)
-            loss = criterion(output, target)
-            valid_loss += loss.item() * data.size(0)
+        # model.eval()
+        # for data, target in valid_loader:
+        #     data, target = data.cuda(), target.cuda()
+        #     output = model(data)
+        #     loss = criterion(output, target)
+        #     valid_loss += loss.item() * data.size(0)
+        #
+        # valid_loss = valid_loss / len(valid_loader.dataset)
+        #
+        # print('Epoch: {} \tValidation Loss: {:.6f}'.format(epoch, valid_loss))
+        #
+        # if valid_loss <= valid_loss_min:
+        #     print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(
+        #         valid_loss_min,
+        #         valid_loss))
+        #     torch.save(model.state_dict(), 'models/model_cifar.pt')
+        #     valid_loss_min = valid_loss
 
-        train_loss = train_loss / len(train_loader.dataset)
-        valid_loss = valid_loss / len(valid_loader.dataset)
-
-        print('Epoch: {} \tTraining Loss: {:.6f} \tValidation Loss: {:.6f}'.format(
-            epoch, train_loss, valid_loss))
-
-        if valid_loss <= valid_loss_min:
-            print('Validation loss decreased ({:.6f} --> {:.6f}).  Saving model ...'.format(
-                valid_loss_min,
-                valid_loss))
-            torch.save(model.state_dict(), 'models/model_cifar.pt')
-            valid_loss_min = valid_loss
+    showLoss(train_loss_history)
