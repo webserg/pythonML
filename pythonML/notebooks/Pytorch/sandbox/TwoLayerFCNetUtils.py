@@ -6,7 +6,7 @@ from random import randrange
 
 
 def get_CIFAR10_preproc_data(num_training=49000, num_validation=1000, num_test=1000,
-                     subtract_mean=True):
+                             subtract_mean=True):
     """
     Load the CIFAR-10 dataset from disk and perform preprocessing to prepare
     it for classifiers. These are the same steps as we used for the SVM, but
@@ -45,6 +45,7 @@ def get_CIFAR10_preproc_data(num_training=49000, num_validation=1000, num_test=1
         'X_val': X_val, 'y_val': y_val,
         'X_test': X_test, 'y_test': y_test,
     }
+
 
 def get_CIFAR10_data(num_training=49000, num_validation=1000, num_test=1000):
     """
@@ -320,7 +321,6 @@ def load_CIFAR10(ROOT):
     del X, Y
     Xte, Yte = load_CIFAR_batch(os.path.join(ROOT, 'test_batch'))
     return Xtr, Ytr, Xte, Yte
-
 
 
 def load_tiny_imagenet(path, dtype=np.float32, subtract_mean=True):

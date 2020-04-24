@@ -25,9 +25,7 @@
 # [3] Sergey Ioffe and Christian Szegedy, "Batch Normalization: Accelerating Deep Network Training by Reducing
 # Internal Covariate Shift", ICML 2015.
 
-from __future__ import print_function
 import time
-import numpy as np
 import numpy as np
 import matplotlib.pyplot as plt
 from random import randrange
