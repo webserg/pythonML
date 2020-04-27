@@ -97,6 +97,7 @@ class RNN(nn.Module):
 
 # train the RNN
 def train(data, rnn, epochs, print_every, norm=False):
+    rnn.train()
     # Defining the training function
     # This function takes in an rnn, a num ber of steps to train for, and returns a trained rnn. This function is also responsible
     # for displaying the loss and the predictions, every so often.
@@ -123,8 +124,8 @@ def train(data, rnn, epochs, print_every, norm=False):
             y = np.array(step_data[1:])
             if (norm):
                 x, y = normalize(x, y)
-            x_tensor = torch.Tensor(x).unsqueeze(0)  # unsqueeze gives a 1, batch_size dimension
-            y_tensor = torch.Tensor(y)
+            x_tensor = torch.Tensor(x).unsqueeze(0).to(device)  # unsqueeze gives a 1, batch_size dimension
+            y_tensor = torch.Tensor(y).to(device)
 
             # outputs from the rnn
             prediction, hidden = rnn(x_tensor, hidden)
@@ -142,10 +143,10 @@ def train(data, rnn, epochs, print_every, norm=False):
             loss.backward()
             optimizer.step()
 
-            if step == int(steps) - 2 and epoch % 50 == 0:
+            if step == int(steps) - 2 and epoch % print_every == 0:
                 print('Loss: ', loss.item())
                 plt.plot(x, 'r.')  # input
-                plt.plot(prediction.data.numpy().flatten(), 'b.')  # predictions
+                plt.plot(prediction.data.cpu().numpy().flatten(), 'b.')  # predictions
                 plt.show()
 
     return hidden
@@ -171,20 +172,22 @@ def plot_data(x, y):
 def validate(data, hidden):
     data = data.reshape((len(data), 1))  # input_size=1
     x, y = data[:-1], data[1:]
-    x_tensor = torch.Tensor(x).unsqueeze(0)  # unsqueeze gives a 1, batch_size dimension
-    y_tensor = torch.Tensor(y)
-    rnn.eval()
+    x_tensor = torch.Tensor(x).unsqueeze(0).to(device)  # unsqueeze gives a 1, batch_size dimension
+    y_tensor = torch.Tensor(y).to(device)
     prediction, hidden = rnn(x_tensor, hidden)
     loss = criterion(prediction, y_tensor)
     print(loss.item())
     plt.plot(x, 'r.')  # input
-    plt.plot(prediction.data.numpy().flatten(), 'b.')  # predictions
+    plt.plot(prediction.data.cpu().numpy().flatten(), 'b.')  # predictions
     plt.show()
 
 
 if __name__ == '__main__':
-    check_data()
 
+    mode = 'train'
+
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    check_data()
     # decide on hyperparameters
     input_size = 1
     output_size = 1
@@ -193,6 +196,7 @@ if __name__ == '__main__':
 
     # instantiate an RNN
     rnn = RNN(input_size, output_size, hidden_dim, n_layers)
+    rnn.to(device)
     print(rnn)
 
     # This is a regression problem: can we train an RNN to accurately predict the next data point, given a current data point?
@@ -204,10 +208,22 @@ if __name__ == '__main__':
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(rnn.parameters(), lr=0.01)
     # train the rnn and monitor results
-    print_every = 100
-    epochs = 150
+    print_every = 50
+    epochs = 100
     dataset = StockCsvDataset('C:/git/pythonML/pythonML/notebooks/Recurrent-Neural-Network-to-Predict-Stock-Prices/TSLA_2012-2016.csv',
                               'C:/git/pythonML/pythonML/notebooks/Recurrent-Neural-Network-to-Predict-Stock-Prices/TSLA_2017.csv')
-    hidden = train(dataset.train, rnn, epochs, print_every)
-    validate(dataset.train, hidden)
-    validate(dataset.test, hidden)
+    if mode == 'train':
+        hidden = train(dataset.train, rnn, epochs, print_every)
+        torch.save(hidden, 'models/tesla_stocks_hidden.ckpt')
+        torch.save(rnn.state_dict(), 'models/tesla_stocks_model.ckpt')
+
+    if mode == 'test':
+        rnn.eval()
+        with torch.no_grad():
+            hidden = torch.load('models/tesla_stocks_hidden.ckpt')
+            hidden = hidden.to(device)
+            rnn = RNN(input_size, output_size, hidden_dim, n_layers)
+            rnn.load_state_dict(torch.load('models/tesla_stocks_model.ckpt'))
+            rnn.to(device)
+            # validate(dataset.train, hidden)
+            validate(dataset.test, hidden)
