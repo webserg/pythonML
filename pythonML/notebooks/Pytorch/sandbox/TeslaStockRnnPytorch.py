@@ -25,20 +25,22 @@ from torch import Tensor
 from torch import nn
 import matplotlib.pyplot as plt
 import torch
+from sklearn.preprocessing import MinMaxScaler
 
 
 class StockCsvDataset(Dataset):
     def __init__(self, train_path, test_path):
         self.X_train = []
         self.Y_train = []
-
         train_set = read_csv(train_path)
         train_set = train_set.iloc[:, 1:2].astype('float32')
-        self.train = train_set.values
+        train_set = MinMaxScaler().fit_transform(train_set)
+        self.train = train_set.astype('float32')
 
         test_set = read_csv(test_path)
         test_set = test_set.iloc[:, 1:2].astype('float32')
-        self.test = test_set.values
+        test_set = MinMaxScaler().fit_transform(test_set)
+        self.test = test_set.astype('float32')
 
     def __len__(self):
         return len(self.train)
@@ -94,7 +96,7 @@ class RNN(nn.Module):
 
 
 # train the RNN
-def train(dataset, rnn, epochs, print_every):
+def train(data, rnn, epochs, print_every, norm=False):
     # Defining the training function
     # This function takes in an rnn, a num ber of steps to train for, and returns a trained rnn. This function is also responsible
     # for displaying the loss and the predictions, every so often.
@@ -110,16 +112,17 @@ def train(dataset, rnn, epochs, print_every):
     hidden = None
     batch_size = 100
     for epoch in range(epochs):
-        data = dataset.train
-        data = data.reshape((len(dataset), 1))  # input_size=1
-        steps = len(dataset) / batch_size
+        data = data.reshape((len(data), 1))  # input_size=1
+        steps = len(data) / batch_size
         for step in range(int(steps) - 1):
             l = (step + 1) * batch_size
-            if (l > len(dataset)):
-                l = len(dataset) - 1
+            if (l > len(data)):
+                l = len(data) - 1
             step_data = data[step * batch_size: l]
-            x = step_data[:-1]
-            y = step_data[1:]
+            x = np.array(step_data[:-1])
+            y = np.array(step_data[1:])
+            if (norm):
+                x, y = normalize(x, y)
             x_tensor = torch.Tensor(x).unsqueeze(0)  # unsqueeze gives a 1, batch_size dimension
             y_tensor = torch.Tensor(y)
 
@@ -139,13 +142,21 @@ def train(dataset, rnn, epochs, print_every):
             loss.backward()
             optimizer.step()
 
-            if step == int(steps) - 2 and epoch % 100 == 0:
+            if step == int(steps) - 2 and epoch % 50 == 0:
                 print('Loss: ', loss.item())
                 plt.plot(x, 'r.')  # input
                 plt.plot(prediction.data.numpy().flatten(), 'b.')  # predictions
                 plt.show()
 
     return hidden
+
+
+def normalize(x, y):
+    x_mean = np.mean(x, axis=0)
+    y_mean = np.mean(y, axis=0)
+    x -= x_mean
+    y -= y_mean
+    return x, y
 
 
 def plot_data(x, y):
@@ -157,13 +168,27 @@ def plot_data(x, y):
     plt.show()
 
 
+def validate(data, hidden):
+    data = data.reshape((len(data), 1))  # input_size=1
+    x, y = data[:-1], data[1:]
+    x_tensor = torch.Tensor(x).unsqueeze(0)  # unsqueeze gives a 1, batch_size dimension
+    y_tensor = torch.Tensor(y)
+    rnn.eval()
+    prediction, hidden = rnn(x_tensor, hidden)
+    loss = criterion(prediction, y_tensor)
+    print(loss.item())
+    plt.plot(x, 'r.')  # input
+    plt.plot(prediction.data.numpy().flatten(), 'b.')  # predictions
+    plt.show()
+
+
 if __name__ == '__main__':
     check_data()
 
     # decide on hyperparameters
     input_size = 1
     output_size = 1
-    hidden_dim = 32
+    hidden_dim = 64
     n_layers = 1
 
     # instantiate an RNN
@@ -180,19 +205,9 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(rnn.parameters(), lr=0.01)
     # train the rnn and monitor results
     print_every = 100
-    epochs = 400
+    epochs = 150
     dataset = StockCsvDataset('C:/git/pythonML/pythonML/notebooks/Recurrent-Neural-Network-to-Predict-Stock-Prices/TSLA_2012-2016.csv',
                               'C:/git/pythonML/pythonML/notebooks/Recurrent-Neural-Network-to-Predict-Stock-Prices/TSLA_2017.csv')
-    hidden = train(dataset, rnn, epochs, print_every)
-    data = dataset.train
-    data = data.reshape((len(dataset), 1))  # input_size=1
-    x = data[:-1]
-    y = data[1:]
-    x_tensor = torch.Tensor(x).unsqueeze(0)  # unsqueeze gives a 1, batch_size dimension
-    y_tensor = torch.Tensor(y)
-    prediction, hidden = rnn(x_tensor, hidden)
-    loss = criterion(prediction, y_tensor)
-    print(loss.item())
-    plt.plot(x, 'r.')  # input
-    plt.plot(prediction.data.numpy().flatten(), 'b.')  # predictions
-    plt.show()
+    hidden = train(dataset.train, rnn, epochs, print_every)
+    validate(dataset.train, hidden)
+    validate(dataset.test, hidden)
