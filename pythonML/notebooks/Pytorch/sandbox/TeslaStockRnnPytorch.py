@@ -8,6 +8,7 @@
 # Solution: Use recurrent neural networks to predict Tesla stock prices in 2017 using data from 2012-2016.
 # http://cs229.stanford.edu/proj2012/BernalFokPidaparthi-FinancialMarketTimeSeriesPredictionwithRecurrentNeural.pdf
 # Data #https://finance.yahoo.com/quote/TSLA/history?p=TSLA
+# мы загрузили только одну акцию, нужно загрузить 100  акций и тренировать вместе, затем получить результат, по выбранным акциям
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -32,15 +33,23 @@ class StockCsvDataset(Dataset):
     def __init__(self, train_path, test_path):
         self.X_train = []
         self.Y_train = []
+        self.trainScaler = MinMaxScaler()
+        self.testScaler = MinMaxScaler()
         train_set = read_csv(train_path)
         train_set = train_set.iloc[:, 1:2].astype('float32')
-        train_set = MinMaxScaler().fit_transform(train_set)
+        train_set = self.trainScaler.fit_transform(train_set)
         self.train = train_set.astype('float32')
 
         test_set = read_csv(test_path)
         test_set = test_set.iloc[:, 1:2].astype('float32')
-        test_set = MinMaxScaler().fit_transform(test_set)
+        test_set = self.testScaler.fit_transform(test_set)
         self.test = test_set.astype('float32')
+
+    def unscaleTrain(self, x):
+        return self.trainScaler.inverse_transform(x)
+
+    def unscaleTest(self, x):
+        return self.testScaler.inverse_transform(x)
 
     def __len__(self):
         return len(self.train)
@@ -162,8 +171,8 @@ def normalize(x, y):
 
 def plot_data(x, y):
     # display the data
-    plt.plot(x, 'r.', label='input, x')  # x
-    plt.plot(y, 'b.', label='target, y')  # y
+    plt.plot(x, color='red', label='input, x')  # x
+    plt.plot(y, color='blue', label='target, y')  # y
 
     plt.legend(loc='best')
     plt.show()
@@ -177,14 +186,14 @@ def validate(data, hidden):
     prediction, hidden = rnn(x_tensor, hidden)
     loss = criterion(prediction, y_tensor)
     print(loss.item())
-    plt.plot(x, 'r.')  # input
-    plt.plot(prediction.data.cpu().numpy().flatten(), 'b.')  # predictions
-    plt.show()
+    y = prediction.data.cpu().numpy().flatten()
+    plot_data(x, y)
 
 
 if __name__ == '__main__':
 
-    mode = 'train'
+    mode = 'test'
+    # mode = 'train'
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     check_data()
@@ -225,5 +234,5 @@ if __name__ == '__main__':
             rnn = RNN(input_size, output_size, hidden_dim, n_layers)
             rnn.load_state_dict(torch.load('models/tesla_stocks_model.ckpt'))
             rnn.to(device)
-            # validate(dataset.train, hidden)
+            validate(dataset.train, hidden)
             validate(dataset.test, hidden)
