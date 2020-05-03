@@ -46,10 +46,10 @@ class Get_data:
 
     def get_data(self, today):
         for k in range(self.n_prev):
-            self.X.append(self.data[today-self.n_prev+k][1])
-        self.Y.append(self.data[today][1])
-        self.X = Variable(torch.from_numpy(np.array(self.X))).float().view(1,1,self.n_prev)
-        self.Y = Variable(torch.from_numpy(np.array(self.Y))).float().view(1,1,1)
+            self.X.append(self.data[today-self.n_prev+k])
+        self.Y.append(self.data[today])
+        self.X = np.array(self.X).reshape(1,1,self.n_prev)
+        self.Y = np.array(self.Y).reshape(1,1,1)
         return self.X, self.Y
 
     def get_raw_data(self):

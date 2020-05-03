@@ -37,7 +37,7 @@ if __name__ == '__main__':
     n = 10
     probs = np.random.rand(n)
     print(probs)
-    eps = 0.1
+    eps = 0.2
     record = np.zeros((n, 2))
     fig, ax = plt.subplots(1, 1)
     ax.set_xlabel("Plays")
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     fig.set_size_inches(9, 5)
     rewards = [0]
     for i in range(100):
-        if random.random() > 0.2:
+        if random.random() > eps:
             choice = np.argmax(record[:, 1], axis=0)
         else:
             choice = np.random.randint(10)
