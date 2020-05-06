@@ -51,6 +51,9 @@ if __name__ == '__main__':
     # It seems like the model just memorized mode='static'
     # the particular board it was trained on and didn’t generalize at all.
     mode='static'
+    # mode='random' doesn't work because of catastrophic forgetting
+    # we don't have such issue in supervised learning because we user random batches which help us to generalize
+    #need to implement batches
     game = Gridworld(size=4, mode=mode)
     # game.display()
     # game.makeMove('d')
@@ -144,6 +147,6 @@ if __name__ == '__main__':
     plt.xlabel("Epochs", fontsize=22)
     plt.ylabel("Loss", fontsize=22)
     plt.show()
-    plt.plot(steps_couter_conrainer)
-    plt.show()
+    # plt.plot(steps_couter_conrainer)
+    # plt.show()
     test_model(model, mode = mode)
