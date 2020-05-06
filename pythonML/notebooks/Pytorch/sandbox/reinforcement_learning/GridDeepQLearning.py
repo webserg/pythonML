@@ -48,7 +48,10 @@ def test_model(model, mode='static', display=True):
 
 
 if __name__ == '__main__':
-    game = Gridworld(size=4, mode='static')
+    # It seems like the model just memorized mode='static'
+    # the particular board it was trained on and didn’t generalize at all.
+    mode='static'
+    game = Gridworld(size=4, mode=mode)
     # game.display()
     # game.makeMove('d')
     # game.makeMove('d')
@@ -90,13 +93,16 @@ if __name__ == '__main__':
 
     epochs = 1000
     losses = []  # A
+    steps_couter_conrainer = []
     for i in range(epochs):  # B
         game = Gridworld(size=4, mode='static')  # C
         state_ = game.board.render_np().reshape(1, 64) + np.random.rand(1, 64) / 10.0  # D
         state = torch.from_numpy(state_).float()  # E
         state1 = state
         status = 1  # F
+        steps_couter = 0
         while (status == 1):  # G
+            steps_couter += 1
             qval = model(state1)  # H
             qval_ = qval.data.numpy()
             if (random.random() < epsilon):  # I
@@ -128,6 +134,8 @@ if __name__ == '__main__':
             state1 = state2
             if reward != -1:  # Q
                 status = 0
+                steps_couter_conrainer.append(steps_couter)
+                steps_couter = 0
         if epsilon > 0.1:  # R
             epsilon -= (1 / epochs)
 
@@ -135,4 +143,7 @@ if __name__ == '__main__':
     plt.plot(losses)
     plt.xlabel("Epochs", fontsize=22)
     plt.ylabel("Loss", fontsize=22)
-    test_model(model)
+    plt.show()
+    plt.plot(steps_couter_conrainer)
+    plt.show()
+    test_model(model, mode = mode)
