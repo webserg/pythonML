@@ -50,10 +50,10 @@ def test_model(model, mode='static', display=True):
 if __name__ == '__main__':
     # It seems like the model just memorized mode='static'
     # the particular board it was trained on and didn’t generalize at all.
-    mode='static'
-    # mode='random' doesn't work because of catastrophic forgetting
+    mode = 'static'
+    # mode='random' # doesn't work because of catastrophic forgetting
     # we don't have such issue in supervised learning because we user random batches which help us to generalize
-    #need to implement batches
+    # need to implement batches
     game = Gridworld(size=4, mode=mode)
     # game.display()
     # game.makeMove('d')
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     losses = []  # A
     steps_couter_conrainer = []
     for i in range(epochs):  # B
-        game = Gridworld(size=4, mode='static')  # C
+        game = Gridworld(size=4, mode=mode)  # C
         state_ = game.board.render_np().reshape(1, 64) + np.random.rand(1, 64) / 10.0  # D
         state = torch.from_numpy(state_).float()  # E
         state1 = state
@@ -149,4 +149,4 @@ if __name__ == '__main__':
     plt.show()
     # plt.plot(steps_couter_conrainer)
     # plt.show()
-    test_model(model, mode = mode)
+    test_model(model, mode=mode)
