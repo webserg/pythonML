@@ -9,7 +9,7 @@ if __name__ == '__main__':
     print(model)
     model.load_state_dict(torch.load('../models/cartPoleRLModel.pt'))
 
-    env = gym.make("CartPole-v0")
+    env = gym.make("CartPole-v1")
 
     MAX_DUR = 200
     MAX_EPISODES = 500
@@ -22,15 +22,16 @@ if __name__ == '__main__':
     state1 = env.reset()
     for i in range(games):
         t = 0
-        while not done:  # F
+        for _ in range(500):  # F
             pred = model(torch.from_numpy(state1).float())  # G
             action = np.random.choice(np.array([0, 1]), p=pred.data.numpy())  # H
             env.render()
             state2, reward, done, info = env.step(action)  # I
             state1 = state2
-            t += 1
-            if t > MAX_DUR:  # L
-                break;
+            if not done:
+                t += 1
+            # if t > MAX_DUR:  # L
+            #     break;
         state1 = env.reset()
         done = False
         score.append(t)
