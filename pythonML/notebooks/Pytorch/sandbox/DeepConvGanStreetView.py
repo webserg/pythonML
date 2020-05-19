@@ -303,3 +303,5 @@ if __name__ == '__main__':
     plt.show()
 
     _ = view_samples(-1, samples)
+
+    torch.save(G.state_dict(), 'models/model_deep_conv_steet_view.pt')
