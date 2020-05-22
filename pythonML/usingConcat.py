@@ -74,3 +74,5 @@ print(np.hstack([a, np.ones((a.shape[0], 1))]))
 a = np.array([[1, 2,2, 3], [4, 5,2, 6], [4, 5,2, 7], [4, 5,2, 8], [4, 5,2, 9]])
 llist = [1,2,3]
 print(a[range(3),llist])
+import random
+random.random()
