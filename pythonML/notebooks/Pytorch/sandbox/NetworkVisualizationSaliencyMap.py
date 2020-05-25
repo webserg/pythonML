@@ -1,5 +1,15 @@
 # IMPORTS
-
+# Using this pretrained model, we will compute class saliency maps as described in Section 3.1 of [2].
+#
+# A saliency map tells us the degree to which each pixel in the image affects the classification score for that image.
+# To compute it, we compute the gradient of the unnormalized score corresponding to the correct class (which is a scalar)
+# with respect to the pixels of the image. If the image has shape (3, H, W) then this gradient will also have shape (3, H, W);
+# for each pixel in the image, this gradient tells us the amount by which the classification score will change
+# if the pixel changes by a small amount. To compute the saliency map, we take the absolute value of this gradient,
+# then take the maximum value over the 3 input channels; the final saliency map thus has shape (H, W) and all entries are nonnegative.
+#
+# [2] Karen Simonyan, Andrea Vedaldi, and Andrew Zisserman. "Deep Inside Convolutional Networks: Visualising Image Classification Models
+# and Saliency Maps", ICLR Workshop 2014.
 import torch
 import torchvision
 import torchvision.transforms as T
