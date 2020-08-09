@@ -1,3 +1,9 @@
+import platform
+import subprocess
+
+import numpy as np
+
+# tag::print_utils[]
 from game_of_go.dlgo import gotypes
 
 COLS = 'ABCDEFGHJKLMNOPQRST'
@@ -29,7 +35,50 @@ def print_board(board):
     print('    ' + '  '.join(COLS[:board.num_cols]))
 
 
+# end::print_utils[]
+
+
+# tag::human_coordinates[]
 def point_from_coords(coords):
     col = COLS.index(coords[0]) + 1
     row = int(coords[1:])
     return gotypes.Point(row=row, col=col)
+
+
+# end::human_coordinates[]
+
+
+def coords_from_point(point):
+    return '%s%d' % (
+        COLS[point.col - 1],
+        point.row
+    )
+
+
+def clear_screen():
+    # see https://stackoverflow.com/a/23075152/323316
+    if platform.system() == "Windows":
+        subprocess.Popen("cls", shell=True).communicate()
+    else:  # Linux and Mac
+        # the link uses print("\033c", end=""), but this is the original sequence given in the book.
+        print(chr(27) + "[2J")
+
+
+# NOTE: MoveAge is only used in chapter 13, and doesn't make it to the main text.
+# This feature will only be implemented in goboard_fast.py so as not to confuse
+# readers in early chapters.
+class MoveAge():
+    def __init__(self, board):
+        self.move_ages = - np.ones((board.num_rows, board.num_cols))
+
+    def get(self, row, col):
+        return self.move_ages[row, col]
+
+    def reset_age(self, point):
+        self.move_ages[point.row - 1, point.col - 1] = -1
+
+    def add(self, point):
+        self.move_ages[point.row - 1, point.col - 1] = 0
+
+    def increment_all(self):
+        self.move_ages[self.move_ages > -1] += 1
