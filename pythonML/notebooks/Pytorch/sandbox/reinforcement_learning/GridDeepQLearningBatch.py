@@ -6,6 +6,11 @@ import random
 from matplotlib import pylab as plt
 from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.Gridworld import Gridworld
 
+"""
+catastrofic forgettin when agen see similar position but goes to different results but agen makes the same action. Since result different 
+previous expirience erased by new result. To avoid it let's instroduce batch learning. Save expirience in replay dequeue and use it to 
+learn batch to avoid catastrofic forgetting  
+"""
 
 def test_model(model, mode='static', display=True):
     i = 0
@@ -16,7 +21,7 @@ def test_model(model, mode='static', display=True):
         print("Initial State:")
         print(test_game.display())
     status = 1
-    while (status == 1):  # A
+    while status == 1:  # A
         qval = model(state)
         qval_ = qval.data.numpy()
         action_ = np.argmax(qval_)  # B
@@ -39,7 +44,7 @@ def test_model(model, mode='static', display=True):
                 if display:
                     print("Game LOST. Reward: %s" % (reward,))
         i += 1
-        if (i > 15):
+        if i > 15:
             if display:
                 print("Game lost; too many moves.")
             break
@@ -47,13 +52,15 @@ def test_model(model, mode='static', display=True):
     win = True if status == 2 else False
     return win
 
-def running_mean(x,N=50):
+
+def running_mean(x, N=50):
     c = x.shape[0] - N
     y = np.zeros(c)
     conv = np.ones(N)
     for i in range(c):
-        y[i] = (x[i:i+N] @ conv)/N
+        y[i] = (x[i:i + N] @ conv) / N
     return y
+
 
 if __name__ == '__main__':
     # It seems like the model just memorized mode='static'
@@ -143,7 +150,7 @@ if __name__ == '__main__':
                     Q2 = model(state2_batch)  # M  Compute Q-values for minibatch of next states but don't compute gradients
 
                 Y = reward_batch + gamma * (
-                            (1 - done_batch) * torch.max(Q2, dim=1)[0])  # N Compute the target Q-values we want the DQN to learn
+                        (1 - done_batch) * torch.max(Q2, dim=1)[0])  # N Compute the target Q-values we want the DQN to learn
                 X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
                 loss = loss_fn(X, Y.detach())
                 print(i, loss.item())
@@ -189,6 +196,6 @@ if __name__ == '__main__':
         if win:
             wins += 1
     win_perc = float(wins) / float(max_games)
-    print("Games played: {0}, # of wins: {1}".format(max_games,wins))
-    print("Win percentage: {}%".format(100.0*win_perc))
+    print("Games played: {0}, # of wins: {1}".format(max_games, wins))
+    print("Win percentage: {}%".format(100.0 * win_perc))
     test_model(model, mode='random')

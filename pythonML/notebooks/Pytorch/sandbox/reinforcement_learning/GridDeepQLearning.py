@@ -119,7 +119,8 @@ if __name__ == '__main__':
             state2 = torch.from_numpy(state2_).float()  # L
             reward = game.reward()
             with torch.no_grad():
-                newQ = model(state2.reshape(1, 64))
+                newQ = model(state2.reshape(1, 64))  # since state2 result of taking action in state1
+                # we took it for target comparing predicted Q value in state1 and real Q value in state2
             maxQ = torch.max(newQ)  # M
             if reward == -1:  # N
                 Y = reward + (gamma * maxQ)
