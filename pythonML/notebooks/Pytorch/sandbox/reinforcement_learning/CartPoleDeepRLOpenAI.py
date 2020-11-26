@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from matplotlib import pylab as plt
 
 
-
 def running_mean(x, N=50):
     kernel = np.ones(N)
     conv_len = x.shape[0] - N
@@ -30,7 +29,15 @@ def loss_fn(preds, r):  # A
     # sums them all and flips the sign.
 
 
+def plot(epoch_history, loss_history):
+    plt.plot(epoch_history, loss_history)
+    plt.xlabel('step')
+    plt.ylabel('loss')
+    plt.show()
+
+
 class CartPoleDeepRLNet(nn.Module):
+
     def __init__(self):
         super(CartPoleDeepRLNet, self).__init__()
         l1 = 4  # A Input data is length 4
@@ -54,6 +61,9 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     env = gym.make("CartPole-v0")
 
+    loss_history = []
+    epoch_history = []
+
     state1 = env.reset()
     pred = model(torch.from_numpy(state1).float())  # G Call policy network model to produce predicted action probabilities
     action = np.random.choice(np.array([0, 1]), p=pred.data.numpy())  # H  Sample an action from the probability distribution
@@ -62,11 +72,12 @@ if __name__ == '__main__':
     # the environment but is irrelevant
 
     MAX_DUR = 200
-    MAX_EPISODES = 500
+    MAX_EPISODES = 1000
     gamma = 0.99
     score = []  # A List to keep track of the episode length over training time
     expectation = 0.0
     for episode in range(MAX_EPISODES):
+        epoch_history.append(episode)
         curr_state = env.reset()
         done = False
         transitions = []  # B  List of state, action, rewards (but we ignore the reward)
@@ -91,12 +102,15 @@ if __name__ == '__main__':
         prob_batch = pred_batch.gather(dim=1, index=action_batch.long().view(-1, 1)).squeeze()  # O Subset the action-probabilities
         # associated with the actions that were actually taken
         loss = loss_fn(prob_batch, disc_returns)
+        loss_history.append(loss)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
     score = np.array(score)
     avg_score = running_mean(score, 50)
+
+    plot(epoch_history, loss_history)
 
     plt.figure(figsize=(10, 7))
     plt.ylabel("Episode Duration", fontsize=22)
