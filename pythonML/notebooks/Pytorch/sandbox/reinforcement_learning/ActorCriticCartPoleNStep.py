@@ -7,10 +7,6 @@ import gym
 import torch.multiprocessing as mp  # A
 
 
-# two net in one class
-# actor choose actions, critic compare predicted
-# value of state to received reward
-
 class ActorCritic(nn.Module):  # B
     def __init__(self):
         super(ActorCritic, self).__init__()
@@ -92,7 +88,7 @@ if __name__ == '__main__':
     processes = []  # C
     params = {
         'epochs': 1000,
-        'n_workers': 4,
+        'n_workers': 7,
     }
     counter = mp.Value('i', 0)  # D
     for i in range(params['n_workers']):
@@ -106,3 +102,84 @@ if __name__ == '__main__':
 
     print(counter.value, processes[1].exitcode)  # H
     torch.save(MasterNode.state_dict(), '../models/actorCriticCartPoleRLModel.pt')
+
+# ##### Test the trained agent
+
+# In[6]:
+
+
+env = gym.make("CartPole-v1")
+env.reset()
+
+for i in range(100):
+    state_ = np.array(env.env.state)
+    state = torch.from_numpy(state_).float()
+    logits, value = MasterNode(state)
+    action_dist = torch.distributions.Categorical(logits=logits)
+    action = action_dist.sample()
+    state2, reward, done, info = env.step(action.detach().numpy())
+    if done:
+        print("Lost")
+        env.reset()
+    state_ = np.array(env.env.state)
+    state = torch.from_numpy(state_).float()
+    env.render()
+
+
+# ##### Listing 5.9
+
+# In[ ]:
+
+
+def run_episode(worker_env, worker_model, N_steps=10):
+    raw_state = np.array(worker_env.env.state)
+    state = torch.from_numpy(raw_state).float()
+    values, logprobs, rewards = [], [], []
+    done = False
+    j = 0
+    G = torch.Tensor([0])  # A
+    while (j < N_steps and done == False):  # B
+        j += 1
+        policy, value = worker_model(state)
+        values.append(value)
+        logits = policy.view(-1)
+        action_dist = torch.distributions.Categorical(logits=logits)
+        action = action_dist.sample()
+        logprob_ = policy.view(-1)[action]
+        logprobs.append(logprob_)
+        state_, _, done, info = worker_env.step(action.detach().numpy())
+        state = torch.from_numpy(state_).float()
+        if done:
+            reward = -10
+            worker_env.reset()
+        else:  # C
+            reward = 1.0
+            G = value.detach()
+        rewards.append(reward)
+    return values, logprobs, rewards, G
+
+
+# ##### Listing 5.10
+
+# In[ ]:
+
+
+# Simulated rewards for 3 steps
+r1 = [1, 1, -1]
+r2 = [1, 1, 1]
+R1, R2 = 0.0, 0.0
+# No bootstrapping
+for i in range(len(r1) - 1, 0, -1):
+    R1 = r1[i] + 0.99 * R1
+for i in range(len(r2) - 1, 0, -1):
+    R2 = r2[i] + 0.99 * R2
+print("No bootstrapping")
+print(R1, R2)
+# With bootstrapping
+R1, R2 = 1.0, 1.0
+for i in range(len(r1) - 1, 0, -1):
+    R1 = r1[i] + 0.99 * R1
+for i in range(len(r2) - 1, 0, -1):
+    R2 = r2[i] + 0.99 * R2
+print("With bootstrapping")
+print(R1, R2)
