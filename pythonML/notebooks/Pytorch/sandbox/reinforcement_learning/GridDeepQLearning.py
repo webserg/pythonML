@@ -82,10 +82,6 @@ if __name__ == '__main__':
     gamma = 0.9
     epsilon = 1.0
     learning_rate = 1e-3
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    gamma = 0.9
-    epsilon = 1.0
 
     action_set = {
         0: 'u',
