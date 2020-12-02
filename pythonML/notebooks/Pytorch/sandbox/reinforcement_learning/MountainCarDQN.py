@@ -55,7 +55,8 @@ if __name__ == '__main__':
             qval = model(torch.from_numpy(state1).float())  # H
             qval_ = qval.data.numpy()
             if random.random() < epsilon:  # I
-                action = np.random.randint(0, 3)
+                # action = np.random.randint(0, 3)
+                action = env.action_space.sample()
             else:
                 action = np.argmax(qval_)
 

@@ -1,6 +1,5 @@
 # https://github.com/openai/gym/wiki/MountainCar-v0
 import gym
-
 env = gym.make('MountainCarContinuous-v0')
 state1 = env.reset()
 action = env.action_space.sample()
