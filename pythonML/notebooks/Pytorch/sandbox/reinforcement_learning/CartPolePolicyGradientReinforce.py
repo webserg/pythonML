@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from matplotlib import pylab as plt
 
 
+# Policy Gradient REINFORCE Method
+
 def running_mean(x, N=50):
     kernel = np.ones(N)
     conv_len = x.shape[0] - N
