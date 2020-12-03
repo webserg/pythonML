@@ -39,7 +39,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     MAX_DUR = 200
-    MAX_EPISODES = 1200
+    MAX_EPISODES = 800
     gamma = 0.99
     epsilon = 1.0
 
@@ -50,7 +50,6 @@ if __name__ == '__main__':
         transitions = []  # list of state, action, rewards
 
         steps_couter = 0
-        total_reward = 0
         while not done:  # while in episode
             steps_couter += 1
             qval = model(torch.from_numpy(state1).float())  # H
@@ -64,22 +63,23 @@ if __name__ == '__main__':
             state2, reward, done, info = env.step(action)
             # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
             position, velocity = state2
-            reward += position + velocity
+            reward = position + velocity
             with torch.no_grad():
                 newQ = model(torch.from_numpy(state2).float())  # since state2 result of taking action in state1
                 # we took it for target comparing predicted Q value in state1 and real Q value in state2
             maxQ = torch.max(newQ)  # M
-            Y = total_reward + (gamma * maxQ)
+            Y = gamma * maxQ
             Y = torch.Tensor([Y]).detach()
             X = qval.squeeze()[action]  # O
             loss = loss_fn(X, Y)  # P
+            loss+=-position
             optimizer.zero_grad()
             loss.backward()
             losses.append(loss.item())
             optimizer.step()
             state1 = state2
-            if done:
-                print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
+            # if done:
+            #     print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
 
     if epsilon > 0.1:  # R
         epsilon -= (1 / MAX_EPISODES)
