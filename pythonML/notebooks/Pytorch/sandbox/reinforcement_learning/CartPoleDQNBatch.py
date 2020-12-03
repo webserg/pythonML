@@ -14,8 +14,8 @@ class DQNet(nn.Module):  # B
     def __init__(self):
         super(DQNet, self).__init__()
         l1 = 4
-        l2 = 20
-        l3 = 10
+        l2 = 40
+        l3 = 20
         l4 = 2
         self.l1 = nn.Linear(l1, l2)
         self.l2 = nn.Linear(l2, l3)
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     MAX_DUR = 500
-    MAX_EPISODES = 1000
+    MAX_EPISODES = 1200
     gamma = 0.9
     epsilon = 0.3
     mem_size = 1000  # A  A Set the total size of the experience replay memory
@@ -92,8 +92,8 @@ if __name__ == '__main__':
                 loss.backward()
                 losses.append(loss.item())
                 optimizer.step()
-            if done:
-                print("state = {0} reward = {1} done = {2} info = {3}".format(state2, total_reward, done, info))
+            # if done:
+            #     print("state = {0} reward = {1} done = {2} info = {3}".format(state2, total_reward, done, info))
 
     plt.figure(figsize=(10, 7))
     plt.plot(losses)
@@ -102,4 +102,4 @@ if __name__ == '__main__':
     plt.show()
     env.close()
 
-    torch.save(model.state_dict(), '../models/cartPoleDQNBatch.pt')
+    torch.save(model.state_dict(), '../models/cartPoleDQNBatch2.pt')
