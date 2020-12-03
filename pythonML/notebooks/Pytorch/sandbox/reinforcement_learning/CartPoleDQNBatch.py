@@ -7,6 +7,7 @@ import numpy as np
 from torch.nn import functional as F
 import random
 from matplotlib import pylab as plt
+from collections import deque
 
 
 class DQNet(nn.Module):  # B
@@ -41,8 +42,10 @@ if __name__ == '__main__':
     MAX_DUR = 500
     MAX_EPISODES = 1000
     gamma = 0.9
-    epsilon = 1.0
-
+    epsilon = 0.3
+    mem_size = 1000  # A  A Set the total size of the experience replay memory
+    batch_size = 200  # B Set the minibatch size
+    replay = deque(maxlen=mem_size)  # C Create the memory replay as a deque list
     losses = []  # A
     for i in range(MAX_EPISODES):  # B
         state1 = env.reset()
@@ -61,30 +64,36 @@ if __name__ == '__main__':
                 action = np.argmax(qval_)
 
             state2, reward, done, info = env.step(action)
-            total_reward+=reward
+            total_reward += reward
             # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
 
-            with torch.no_grad():
-                newQ = model(torch.from_numpy(state2).float())  # since state2 result of taking action in state1
-                # we took it for target comparing predicted Q value in state1 and real Q value in state2
-            maxQ = torch.max(newQ)  # M
-            Y = total_reward + gamma * maxQ
-
-            Y = torch.Tensor([Y]).detach()
-            X = qval.squeeze()[action]  # O
-            loss = loss_fn(X, Y)  # P
-            optimizer.zero_grad()
-            loss.backward()
-            losses.append(loss.item())
-            optimizer.step()
+            exp = (state1, action, total_reward, state2, done)  # G Create experience of state, reward, action and next state as a tuple
+            replay.append(exp)  # H Add experience to experience replay list
             state1 = state2
-            if done:
-                print(i, loss.item())
-                print(maxQ)
-                print("state = {0} reward = {1} done = {2} info = {3}".format(state2, total_reward, done, info))
 
-        if epsilon > 0.1:  # R
-            epsilon -= (1 / MAX_EPISODES)
+            if len(replay) > batch_size:  # I  If replay list is at least as long as minibatch size, begin minibatch training
+                minibatch = random.sample(replay, batch_size)  # J
+                state1_batch = torch.Tensor([s1 for (s1, a, r, s2, d) in minibatch])  # K
+                action_batch = torch.Tensor([a for (s1, a, r, s2, d) in minibatch])
+                reward_batch = torch.Tensor([r for (s1, a, r, s2, d) in minibatch])
+                state2_batch = torch.Tensor([s2 for (s1, a, r, s2, d) in minibatch])
+                done_batch = torch.Tensor([d for (s1, a, r, s2, d) in minibatch])
+
+                Q1 = model(state1_batch)  # L  Re-compute Q-values for minibatch of states to get gradients
+                with torch.no_grad():
+                    Q2 = model(state2_batch)  # M  Compute Q-values for minibatch of next states but don't compute gradients
+
+                Y = reward_batch + gamma * ((1 - done_batch) * torch.max(Q2, dim=1)[0])  # Compute target Q-values we want the DQN to learn
+
+                X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
+                loss = loss_fn(X, Y.detach())
+                # print(i, loss.item())
+                optimizer.zero_grad()
+                loss.backward()
+                losses.append(loss.item())
+                optimizer.step()
+            if done:
+                print("state = {0} reward = {1} done = {2} info = {3}".format(state2, total_reward, done, info))
 
     plt.figure(figsize=(10, 7))
     plt.plot(losses)
@@ -93,4 +102,4 @@ if __name__ == '__main__':
     plt.show()
     env.close()
 
-    torch.save(model.state_dict(), '../models/cartPoleDQN.pt')
+    torch.save(model.state_dict(), '../models/cartPoleDQNBatch.pt')
