@@ -1,17 +1,16 @@
-import gym
-import numpy as np
 import torch
-from matplotlib import pylab as plt
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePolicyGradient import CartPolePolicyGradientNet
+import numpy as np
+import gym
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarDQN import DQNet
 
 if __name__ == '__main__':
-    model = CartPolePolicyGradientNet()
+    model = DQNet()  # A
     print(model)
-    model.load_state_dict(torch.load('../models/cartPolePolicyGradient.pt'))
-    env = gym.make("CartPole-v0")
+    model.load_state_dict(torch.load('../models/mountainCarDQN.pt'))
+    env = gym.make("MountainCar-v0")
     env.reset()
     j=0
-    for i in range(1000):
+    for i in range(2000):
         j+=1
         state_ = np.array(env.env.state)
         state = torch.from_numpy(state_).float()
@@ -19,6 +18,7 @@ if __name__ == '__main__':
         qval_ = qval.data.numpy()
         action = np.argmax(qval_)
         state2, reward, done, info = env.step(action)
+        print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
         if done:
             print("Lost step = " + str(j))
             env.reset()
@@ -28,4 +28,3 @@ if __name__ == '__main__':
         env.render()
 
     env.close()
-

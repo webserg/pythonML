@@ -92,4 +92,4 @@ if __name__ == '__main__':
 
     print("win_couter = {0}".format(win_couter))
 
-    torch.save(model.state_dict(), '../models/mountainCarDQN.pt')
+    torch.save(model.state_dict(), '../models/mountainCarDQNCont.pt')

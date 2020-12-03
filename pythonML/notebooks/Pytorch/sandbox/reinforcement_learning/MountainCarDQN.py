@@ -13,8 +13,8 @@ class DQNet(nn.Module):  # B
     def __init__(self):
         super(DQNet, self).__init__()
         l1 = 2
-        l2 = 20
-        l3 = 10
+        l2 = 40
+        l3 = 20
         l4 = 3
         self.l1 = nn.Linear(l1, l2)
         self.l2 = nn.Linear(l2, l3)
@@ -50,6 +50,7 @@ if __name__ == '__main__':
         transitions = []  # list of state, action, rewards
 
         steps_couter = 0
+        total_reward = 0
         while not done:  # while in episode
             steps_couter += 1
             qval = model(torch.from_numpy(state1).float())  # H
@@ -61,32 +62,27 @@ if __name__ == '__main__':
                 action = np.argmax(qval_)
 
             state2, reward, done, info = env.step(action)
-            print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
-
+            # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
+            position, velocity = state2
+            reward += position + velocity
             with torch.no_grad():
                 newQ = model(torch.from_numpy(state2).float())  # since state2 result of taking action in state1
                 # we took it for target comparing predicted Q value in state1 and real Q value in state2
             maxQ = torch.max(newQ)  # M
-            if not done:  # N
-                Y = reward + (gamma * maxQ)
-            else:
-                if steps_couter > 199:
-                    Y = -10
-                else:
-                    Y = 10
-
+            Y = total_reward + (gamma * maxQ)
             Y = torch.Tensor([Y]).detach()
             X = qval.squeeze()[action]  # O
             loss = loss_fn(X, Y)  # P
-            print(i, loss.item())
             optimizer.zero_grad()
             loss.backward()
             losses.append(loss.item())
             optimizer.step()
             state1 = state2
+            if done:
+                print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
 
-        if epsilon > 0.1:  # R
-            epsilon -= (1 / MAX_EPISODES)
+    if epsilon > 0.1:  # R
+        epsilon -= (1 / MAX_EPISODES)
 
     plt.figure(figsize=(10, 7))
     plt.plot(losses)
