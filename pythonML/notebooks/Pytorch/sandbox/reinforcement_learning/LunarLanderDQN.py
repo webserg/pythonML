@@ -12,10 +12,10 @@ from matplotlib import pylab as plt
 class DQNet(nn.Module):  # B
     def __init__(self):
         super(DQNet, self).__init__()
-        l1 = 4
-        l2 = 20
-        l3 = 10
-        l4 = 2
+        l1 = 8
+        l2 = 80
+        l3 = 40
+        l4 = 4
         self.l1 = nn.Linear(l1, l2)
         self.l2 = nn.Linear(l2, l3)
         self.l3 = nn.Linear(l3, l4)
@@ -28,9 +28,20 @@ class DQNet(nn.Module):  # B
         return y
 
 
+def epsilon_greedy(epsilon, qval):
+    qval_ = qval.data.numpy()
+    if random.random() < epsilon:  # I
+        action = env.action_space.sample()
+    else:
+        action = np.argmax(qval_)
+    if epsilon > 0.1:  # R
+        epsilon -= (1 / MAX_EPISODES)
+    return action
+
+
 if __name__ == '__main__':
 
-    env = gym.make('CartPole-v0')
+    env = gym.make('LunarLander-v2')
 
     model = DQNet()
 
@@ -54,23 +65,19 @@ if __name__ == '__main__':
         while not done:  # while in episode
             steps_couter += 1
             qval = model(torch.from_numpy(state1).float())  # H
-            qval_ = qval.data.numpy()
-            if random.random() < epsilon:  # I
-                action = np.random.randint(0, 2)
-            else:
-                action = np.argmax(qval_)
+            action = epsilon_greedy(epsilon, qval)
 
             state2, reward, done, info = env.step(action)
-            total_reward+=reward
+            total_reward += reward
             # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
 
             with torch.no_grad():
                 newQ = model(torch.from_numpy(state2).float())  # since state2 result of taking action in state1
                 # we took it for target comparing predicted Q value in state1 and real Q value in state2
             maxQ = torch.max(newQ)  # M
-            Y = total_reward + gamma * maxQ
 
-            Y = torch.Tensor([Y]).detach()
+            Y = total_reward + (1 - done) * gamma * maxQ
+
             X = qval.squeeze()[action]  # O
             loss = loss_fn(X, Y)  # P
             optimizer.zero_grad()
@@ -78,13 +85,12 @@ if __name__ == '__main__':
             losses.append(loss.item())
             optimizer.step()
             state1 = state2
-            if done:
-                print(i, loss.item())
-                print(maxQ)
-                print("state = {0} reward = {1} done = {2} info = {3}".format(state2, total_reward, done, info))
+            # if done:
+            #     print("state = {0} reward = {1} done = {2} info = {3} reward Y = {4} X = {5}".format(state2, reward, done, info,Y,   X))
 
-        if epsilon > 0.1:  # R
-            epsilon -= (1 / MAX_EPISODES)
+        if i % 100 == 0:
+            torch.save(model.state_dict(), '../models/LunarLanderDQN.pt')
+            print("model saved {0}".format(i))
 
     plt.figure(figsize=(10, 7))
     plt.plot(losses)
@@ -92,5 +98,3 @@ if __name__ == '__main__':
     plt.ylabel("Loss", fontsize=22)
     plt.show()
     env.close()
-
-    torch.save(model.state_dict(), '../models/cartPoleDQN.pt')

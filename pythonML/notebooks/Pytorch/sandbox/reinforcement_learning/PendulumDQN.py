@@ -1,4 +1,4 @@
-# https://github.com/openai/gym/wiki/CartPole-v0
+# https://github.com/openai/gym/wiki/Pendulum-v0
 import gym
 import torch
 from torch import nn
