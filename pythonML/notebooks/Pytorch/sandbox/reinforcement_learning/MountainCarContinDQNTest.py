@@ -1,13 +1,13 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarDQN import DQNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarContinDQN import DQNet
 
 if __name__ == '__main__':
     model = DQNet()  # A
     print(model)
-    model.load_state_dict(torch.load('../models/mountainCarDQN.pt'))
-    env = gym.make("MountainCar-v0")
+    model.load_state_dict(torch.load('../models/mountainCarDQNCont.pt'))
+    env = gym.make("MountainCarContinuous-v0")
     env.reset()
     j=0
     for i in range(2000):

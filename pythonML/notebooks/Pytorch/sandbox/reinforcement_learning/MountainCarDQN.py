@@ -31,8 +31,11 @@ class DQNet(nn.Module):  # B
 if __name__ == '__main__':
 
     env = gym.make('MountainCar-v0')
+    cuda = torch.device("cuda")
+    cpu = torch.device("cpu")
 
     model = DQNet()
+    model.to(cuda)
 
     loss_fn = torch.nn.MSELoss()
     learning_rate = 1e-3
@@ -50,10 +53,11 @@ if __name__ == '__main__':
         transitions = []  # list of state, action, rewards
 
         steps_couter = 0
+        total_reward = 0
         while not done:  # while in episode
             steps_couter += 1
-            qval = model(torch.from_numpy(state1).float())  # H
-            qval_ = qval.data.numpy()
+            qval = model(torch.from_numpy(state1).to(cuda).float())  # H
+            qval_ = qval.to(cpu)
             if random.random() < epsilon:  # I
                 # action = np.random.randint(0, 3)
                 action = env.action_space.sample()
@@ -61,25 +65,29 @@ if __name__ == '__main__':
                 action = np.argmax(qval_)
 
             state2, reward, done, info = env.step(action)
+            total_reward+=reward
             # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
             position, velocity = state2
-            reward = position + velocity
+            # reward = reward + position + velocity
             with torch.no_grad():
-                newQ = model(torch.from_numpy(state2).float())  # since state2 result of taking action in state1
+                newQ = model(torch.from_numpy(state2).to(cuda).float())  # since state2 result of taking action in state1
+                newQ = newQ.to(cpu)
                 # we took it for target comparing predicted Q value in state1 and real Q value in state2
             maxQ = torch.max(newQ)  # M
-            Y = gamma * maxQ
+            Y = reward + gamma * (1 - done) * maxQ
             Y = torch.Tensor([Y]).detach()
             X = qval.squeeze()[action]  # O
-            loss = loss_fn(X, Y)  # P
-            loss+=-position
+            loss = loss_fn(X, Y.to(cuda))  # P
             optimizer.zero_grad()
             loss.backward()
             losses.append(loss.item())
             optimizer.step()
             state1 = state2
-            # if done:
-            #     print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
+            if done:
+                print("state = {0} reward = {1} done = {2} info = {3} reward Y = {4} X = {5}".format(state2, reward, done, info,Y,   X))
+        if i%100 == 0:
+            torch.save(model.state_dict(), '../models/mountainCarDQN.pt')
+            print("model saved {0}".format(i))
 
     if epsilon > 0.1:  # R
         epsilon -= (1 / MAX_EPISODES)
@@ -91,4 +99,3 @@ if __name__ == '__main__':
     plt.show()
     env.close()
 
-    torch.save(model.state_dict(), '../models/mountainCarDQN.pt')
