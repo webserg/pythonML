@@ -43,6 +43,9 @@ class DQNet(nn.Module):
     def save(self):
         torch.save(self.state_dict(), '../models/LunarLanderDQN.pt')
 
+    def load(self):
+        self.load_state_dict(torch.load('../models/LunarLanderDQN.pt'))
+
     def plot(self):
         plt.figure(figsize=(10, 7))
         plt.plot(self.losses)
@@ -74,8 +77,7 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
     model = DQNet()
     agent = Agent()
-    MAX_DUR = 500
-    MAX_EPISODES = 1500
+    MAX_EPISODES = 1750
     gamma = 0.9
 
     for i in range(MAX_EPISODES):

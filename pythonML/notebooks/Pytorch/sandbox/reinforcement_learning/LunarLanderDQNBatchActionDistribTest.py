@@ -6,31 +6,30 @@ from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.LunarLanderDQNBat
 if __name__ == '__main__':
     model = DQNet()  # A
     print(model)
-    model.load()
+    model.load_state_dict(torch.load('../models/LunarLanderDQNBatchActionDistib.pt'))
     env = gym.make("LunarLander-v2")
     env.reset()
     j = 0
     state, reward, done, info = env.step(env.action_space.sample())
-    game_reward = 0
+    state = torch.from_numpy(state).float()
     total_reward = 0
-    total_games = 20
-    game_counter = 0
-    while game_counter < total_games:
+    rand_generator = np.random.RandomState()
+    num_actions = 4
+    for i in range(2000):
         j += 1
-        qval = model(torch.from_numpy(state).float())
-        qval_ = qval.data.numpy()
-        action = np.argmax(qval_)
+        probs_batch = model(state)  # H
+        # qval_ = qval.data.numpy()
+        probs_batch_ = probs_batch.detach().numpy()
+        action = rand_generator.choice(num_actions, p=probs_batch_.squeeze())
         state2, reward, done, info = env.step(action)
-        game_reward += reward
+        total_reward += reward
         # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
         if done:
-            game_counter +=1
-            print("Lost step = {0} reward {1}".format(j, game_reward))
+            print("Lost step = {0} reward {1}".format(j, total_reward))
             env.reset()
             j = 0
-            total_reward += game_reward
-            game_reward = 0
-        state = state2
+            total_reward = 0
+        state = torch.from_numpy(state2).float()
         env.render()
-    print(" avg reward {0}".format(total_reward / game_counter))
+
     env.close()
