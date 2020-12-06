@@ -11,19 +11,21 @@ if __name__ == '__main__':
     env.reset()
     j = 0
     state, reward, done, info = env.step(env.action_space.sample())
-    state = torch.from_numpy(state).float()
+    total_reward = 0
     for i in range(2000):
         j += 1
         qval = model(state)
         qval_ = qval.data.numpy()
         action = np.argmax(qval_)
         state2, reward, done, info = env.step(action)
+        total_reward += reward
         # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
         if done:
-            print("Lost step = {0} reward {1}".format(j, reward))
+            print("Lost step = {0} reward {1}".format(j, total_reward))
             env.reset()
             j = 0
-        state = torch.from_numpy(state2).float()
+            total_reward = 0
+        state = state2
         env.render()
 
     env.close()
