@@ -8,6 +8,7 @@ from torch.nn import functional as F
 import random
 from matplotlib import pylab as plt
 from collections import deque
+import copy
 
 
 class DQNet(nn.Module):
@@ -52,7 +53,6 @@ class DQNet(nn.Module):
         plt.xlabel("Epochs", fontsize=22)
         plt.ylabel("Loss", fontsize=22)
         plt.show()
-        env.close()
 
 
 class Agent:
@@ -77,26 +77,30 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
 
     model = DQNet()
+    model2 = copy.deepcopy(model)
+    model2.load_state_dict(model.state_dict())
     agent = Agent()
 
+    sync_freq = 50
     MAX_DUR = 500
     MAX_EPISODES = 500
     gamma = 0.9
-    mem_size = 1000000  # A  A Set the total size of the experience replay memory
+    mem_size = 100000  # A  A Set the total size of the experience replay memory
     batch_size = 64
     replay = deque(maxlen=mem_size)
-
+    j=0
     for i in range(MAX_EPISODES):
         state1 = env.reset()
         done = False
         transitions = []
         steps_counter = 0
+        total_reward = 0
         while not done:
             steps_counter += 1
+            j += 1
             Q = model(torch.from_numpy(state1).float())
             action = agent.epsilon_greedy(Q, env.action_space)
             state2, reward, done, info = env.step(action)
-
             exp = (state1, action, reward, state2, done)  # G Create experience of state, reward, action and next state as a tuple
             replay.append(exp)  # H Add experience to experience replay list
             state1 = state2
@@ -111,19 +115,22 @@ if __name__ == '__main__':
 
                 Q1 = model(state1_batch)  # L  Re-compute Q-values for minibatch of states to get gradients
                 with torch.no_grad():
-                    Q2 = model(state2_batch)  # M  Compute Q-values for minibatch of next states but don't compute gradients
+                    Q2 = model2(state2_batch)  # use target model Compute Q-values for minibatch of next states but don't compute gradients
 
                 Y = reward_batch + gamma * ((1 - done_batch) * torch.max(Q2, dim=1)[0])  # Compute target Q-values we want the DQN to learn
 
                 X = Q1.gather(dim=1, index=action_batch.long().unsqueeze(dim=1)).squeeze()
 
                 model.fit(X, Y)
+                if j % sync_freq == 0:
+                    model2.load_state_dict(model.state_dict())
                 # if done:
                 #     print("state = {0} reward = {1} done = {2} info = {3} ".format(state2, reward, done, info))
 
         if i != 0 and i % 100 == 0:
             model.save()
             print("model saved {0}".format(i))
+            model.plot()
 
     model.plot()
     env.close()

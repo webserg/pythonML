@@ -10,6 +10,7 @@ from matplotlib import pylab as plt
 
 
 class DQNet(nn.Module):
+    file_path = '../models/LunarLanderDQN.pt'
 
     def __init__(self):
         super(DQNet, self).__init__()
@@ -33,7 +34,7 @@ class DQNet(nn.Module):
         y = self.l3(y)
         return y
 
-    def optimize(self, X, Y):
+    def fit(self, X, Y):
         loss = self.loss_fn(X, Y)  # P
         self.optimizer.zero_grad()
         loss.backward()
@@ -41,10 +42,10 @@ class DQNet(nn.Module):
         self.optimizer.step()
 
     def save(self):
-        torch.save(self.state_dict(), '../models/LunarLanderDQN.pt')
+        torch.save(self.state_dict(), self.file_path)
 
     def load(self):
-        self.load_state_dict(torch.load('../models/LunarLanderDQN.pt'))
+        self.load_state_dict(torch.load(self.file_path))
 
     def plot(self):
         plt.figure(figsize=(10, 7))
@@ -52,7 +53,6 @@ class DQNet(nn.Module):
         plt.xlabel("Epochs", fontsize=22)
         plt.ylabel("Loss", fontsize=22)
         plt.show()
-        env.close()
 
 
 class Agent:
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
     model = DQNet()
     agent = Agent()
-    MAX_EPISODES = 1750
+    MAX_EPISODES = 1600
     gamma = 0.9
 
     for i in range(MAX_EPISODES):
@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
             Y = total_reward + (1 - done) * gamma * maxQ
             X = Q.squeeze()[action]
-            model.optimize(X, Y)
+            model.fit(X, Y)
             state1 = state2
             # if done:
             #     print("state = {0} reward = {1} done = {2} info = {3} reward Y = {4} X = {5}".format(state2, reward, done, info, Y, X))

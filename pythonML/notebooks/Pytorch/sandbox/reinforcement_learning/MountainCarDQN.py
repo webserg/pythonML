@@ -9,93 +9,122 @@ import random
 from matplotlib import pylab as plt
 
 
-class DQNet(nn.Module):  # B
+class NetConfig:
+    file_path = '../models/mountainCarDQN.pt'
+    cuda = torch.device("cuda")
+    cpu = torch.device("cpu")
+    learning_rate = 1e-3
+    l1 = 2
+    l2 = 200
+    l3 = 100
+    l4 = 3
+
     def __init__(self):
+        pass
+
+
+class DQNet(nn.Module):
+
+    def __init__(self, config: NetConfig):
         super(DQNet, self).__init__()
-        l1 = 2
-        l2 = 40
-        l3 = 20
-        l4 = 3
-        self.l1 = nn.Linear(l1, l2)
-        self.l2 = nn.Linear(l2, l3)
-        self.l3 = nn.Linear(l3, l4)
+        self.config = config
+        self.l1 = nn.Linear(config.l1, config.l2)
+        self.l2 = nn.Linear(config.l2, config.l3)
+        self.l3 = nn.Linear(config.l3, config.l4)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=config.learning_rate)
+        self.loss_fn = torch.nn.MSELoss().to(config.cuda)
+        self.losses = []  # A
+        self.to(config.cuda)
 
     def forward(self, x):
+        x = torch.from_numpy(x).to(self.config.cuda).float()
         x = F.normalize(x, dim=0)
         y = F.relu(self.l1(x))
         y = F.relu(self.l2(y))
         y = self.l3(y)
         return y
 
+    def fit(self, X, Y):
+        loss = self.loss_fn(X, Y.to(self.config.cuda))  # P
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.losses.append(loss.item())
+        self.optimizer.step()
+
+    def save(self):
+        torch.save(self.state_dict(), self.config.file_path)
+
+    def load(self):
+        self.load_state_dict(torch.load(self.config.file_path))
+
+    def plot(self):
+        plt.figure(figsize=(10, 7))
+        plt.plot(self.losses)
+        plt.xlabel("Epochs", fontsize=22)
+        plt.ylabel("Loss", fontsize=22)
+        plt.show()
+
+
+class Agent:
+    epsilon = 1.0
+
+    def __init__(self):
+        pass
+
+    def epsilon_greedy(self, Q, action_space):
+        q = Q.data.numpy()
+        if random.random() < self.epsilon:  # I
+            act = action_space.sample()
+        else:
+            act = np.argmax(q)
+        if self.epsilon > 0.1:  # R
+            self.epsilon -= (1 / MAX_EPISODES)
+        return act
+
 
 if __name__ == '__main__':
 
-    env = gym.make('MountainCar-v0')
     cuda = torch.device("cuda")
     cpu = torch.device("cpu")
+    env = gym.make('MountainCar-v0')
+    config = NetConfig
+    model = DQNet(config)
+    agent = Agent()
 
-    model = DQNet()
-    model.to(cuda)
-
-    loss_fn = torch.nn.MSELoss()
-    learning_rate = 1e-3
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    MAX_DUR = 200
-    MAX_EPISODES = 800
+    MAX_EPISODES = 1000
     gamma = 0.99
-    epsilon = 1.0
 
     losses = []  # A
     for i in range(MAX_EPISODES):  # B
         state1 = env.reset()
         done = False
-        transitions = []  # list of state, action, rewards
 
         steps_couter = 0
         total_reward = 0
-        while not done:  # while in episode
+        while not done:
             steps_couter += 1
-            qval = model(torch.from_numpy(state1).to(cuda).float())  # H
-            qval_ = qval.to(cpu)
-            if random.random() < epsilon:  # I
-                # action = np.random.randint(0, 3)
-                action = env.action_space.sample()
-            else:
-                action = np.argmax(qval_)
+            Q = model(state1)
+            qval_ = Q.to(cpu)
+            action = agent.epsilon_greedy(qval_, env.action_space)
 
             state2, reward, done, info = env.step(action)
-            total_reward+=reward
-            # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
-            position, velocity = state2
-            # reward = reward + position + velocity
+            total_reward += reward
+
             with torch.no_grad():
-                newQ = model(torch.from_numpy(state2).to(cuda).float())  # since state2 result of taking action in state1
-                newQ = newQ.to(cpu)
-                # we took it for target comparing predicted Q value in state1 and real Q value in state2
-            maxQ = torch.max(newQ)  # M
-            Y = reward + gamma * (1 - done) * maxQ
-            Y = torch.Tensor([Y]).detach()
-            X = qval.squeeze()[action]  # O
-            loss = loss_fn(X, Y.to(cuda))  # P
-            optimizer.zero_grad()
-            loss.backward()
-            losses.append(loss.item())
-            optimizer.step()
+                newQ = model(state2)
+            newQ = newQ.to(cpu)
+            maxQ = torch.max(newQ)
+
+            Y = total_reward + gamma * (1 - done) * maxQ
+            X = Q.squeeze()[action]
+            model.fit(X, Y)
             state1 = state2
-            if done:
-                print("state = {0} reward = {1} done = {2} info = {3} reward Y = {4} X = {5}".format(state2, reward, done, info,Y,   X))
-        if i%100 == 0:
-            torch.save(model.state_dict(), '../models/mountainCarDQN.pt')
+
+        if i % 100 == 0:
+            model.save()
             print("model saved {0}".format(i))
+            model.plot()
 
-    if epsilon > 0.1:  # R
-        epsilon -= (1 / MAX_EPISODES)
-
-    plt.figure(figsize=(10, 7))
-    plt.plot(losses)
-    plt.xlabel("Epochs", fontsize=22)
-    plt.ylabel("Loss", fontsize=22)
-    plt.show()
+    model.plot()
     env.close()
-
+    model.save()
