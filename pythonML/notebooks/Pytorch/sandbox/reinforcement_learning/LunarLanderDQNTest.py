@@ -8,9 +8,8 @@ if __name__ == '__main__':
     print(model)
     model.load()
     env = gym.make("LunarLander-v2")
-    env.reset()
+    state = env.reset()
     j = 0
-    state, reward, done, info = env.step(env.action_space.sample())
     game_reward = 0
     total_reward = 0
     total_games = 20

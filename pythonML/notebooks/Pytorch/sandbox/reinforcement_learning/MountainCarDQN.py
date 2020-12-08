@@ -1,4 +1,10 @@
 # https://github.com/openai/gym/wiki/MountainCar-v0
+# The car is under-powered so the agent needs to learn to rock back and forth to get enough momentum to reach the goal. At each time step
+# the agent receives from the environment its current velocity (a float between -0.07 and 0.07), and it's current position
+# (a float between -1.2 and 0.5). Because our state is continuous there are a potentially infinite number of states that our
+# agent could be in. We need a function approximation method to help the agent deal with this. In this notebook we will use tile
+# coding. We provide a tile coding implementation for you to use, imported above with tiles3.
+
 import gym
 import torch
 from torch import nn

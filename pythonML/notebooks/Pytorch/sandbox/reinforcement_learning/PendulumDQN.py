@@ -1,4 +1,25 @@
 # https://github.com/openai/gym/wiki/Pendulum-v0
+# The environment consists of single pendulum that can swing 360 degrees. The pendulum is actuated by applying a torque on its pivot point.
+# The goal is to get the pendulum to balance up-right from its resting position (hanging down at the bottom with no velocity) and maintain
+# it as long as possible. The pendulum can move freely, subject only to gravity and the action applied by the agent.
+
+# The state is 2-dimensional, which consists of the current angle  𝛽∈[−𝜋,𝜋]  (angle from the vertical upright position) and current angular
+# velocity  𝛽˙∈(−2𝜋,2𝜋) . The angular velocity is constrained in order to avoid damaging the pendulum system. If the angular velocity
+# reaches
+# this limit during simulation, the pendulum is reset to the resting position. The action is the angular acceleration, with
+#     discrete values  𝑎∈{−1,0,1}  applied to the pendulum. For more details on environment dynamics you can refer to the original paper.
+#
+# The goal is to swing-up the pendulum and maintain its upright angle. Hence, the reward is the negative absolute angle from the vertical
+# position:  𝑅𝑡=−|𝛽𝑡|
+# Furthermore, since the goal is to reach and maintain a vertical position, there are no terminations nor episodes. Thus this problem can be
+# formulated as a continuing task.
+#
+# Similar to the Mountain Car task, the action in this pendulum environment is not strong enough to move the pendulum directly
+# to the desired
+# position. The agent must learn to first move the pendulum away from its desired position and gain enough momentum to successfully
+# swing-up the pendulum. And even after reaching the upright position the agent must learn to continually balance the pendulum
+# in this unstable position.
+
 import gym
 import torch
 from torch import nn
@@ -61,7 +82,7 @@ if __name__ == '__main__':
                 action = np.argmax(qval_)
 
             state2, reward, done, info = env.step(action)
-            total_reward+=reward
+            total_reward += reward
             # print("state = {0} reward = {1} done = {2} info = {3}".format(state2, reward, done, info))
 
             with torch.no_grad():
