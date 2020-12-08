@@ -19,8 +19,8 @@ class NetConfig:
     file_path = '../models/LunarLanderPolicyGradient.pt'
     learning_rate = 1e-3
     l1 = 8
-    l2 = 100
-    l3 = 60
+    l2 = 150
+    l3 = 80
     l4 = 4
 
     def __init__(self):
@@ -78,40 +78,12 @@ class PolicyGradientNet(nn.Module):
         plt.show()
 
 
-class Agent:
-    epsilon = 1.0
-
-    def __init__(self):
-        pass
-
-    def epsilon_greedy(self, Q, action_space):
-        q = Q.data.numpy()
-        if random.random() < self.epsilon:  # I
-            act = action_space.sample()
-        else:
-            act = np.argmax(q)
-        if self.epsilon > 0.1:  # R
-            self.epsilon -= (1 / MAX_EPISODES)
-        return act
-
-
-def get_future_reward(step, transitions_array):
-    discount = 1
-    future_reward = 0
-    # discount rewards
-    for i2 in range(step, ep_len):
-        future_reward += transitions_array[i2][2] * discount
-        discount = discount * gamma
-    return future_reward
-
-
 if __name__ == '__main__':
 
     env = gym.make('LunarLander-v2')
     config = NetConfig()
     model = PolicyGradientNet(config)
-    agent = Agent()
-    MAX_EPISODES = 4000
+    MAX_EPISODES = 2000
     gamma = 0.99
 
     time_steps = []
@@ -135,15 +107,19 @@ if __name__ == '__main__':
         preds = torch.zeros(ep_len)
         discounted_rewards = torch.zeros(ep_len)
 
-        for i in range(ep_len):  # for each step in episode
-            discounted_rewards[i] = get_future_reward(i, transitions)
-            state, action, _ = transitions[i]
+        discounted_reward = 0
+        discount = 1
+        for step in reversed(range(ep_len)):  # for each step in episode
+            state, action, step_reward = transitions[step]
+            discounted_reward += step_reward * discount
+            discount = discount * gamma
+            discounted_rewards[step] = discounted_reward
             pred = model(state)
-            preds[i] = pred[action]
+            preds[step] = pred[action]
 
         model.fit(preds, discounted_rewards)
 
-        if episode > 0 and episode % 1000 == 0:
+        if episode > 0 and episode % 200 == 0:
             model.save()
             model.plot()
             print("model saved {0}".format(episode))
