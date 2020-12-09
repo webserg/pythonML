@@ -2,14 +2,14 @@ import gym
 import numpy as np
 import torch
 from matplotlib import pylab as plt
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPoleDeepRLOpenAI import CartPoleDeepRLNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePolicyGradientReinforce import CartPoleDeepRLNet
 
 if __name__ == '__main__':
     model = CartPoleDeepRLNet()
     print(model)
     model.load_state_dict(torch.load('../models/cartPoleRLModel.pt'))
 
-    env = gym.make("CartPole-v1")
+    env = gym.make("CartPole-v0")
 
     MAX_DUR = 200
     MAX_EPISODES = 500

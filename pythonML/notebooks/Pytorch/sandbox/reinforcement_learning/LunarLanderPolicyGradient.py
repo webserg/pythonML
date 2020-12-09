@@ -117,9 +117,11 @@ if __name__ == '__main__':
             pred = model(state)
             preds[step] = pred[action]
 
+        discounted_rewards -= torch.mean(discounted_rewards)
+        discounted_rewards /= torch.std(discounted_rewards)
         model.fit(preds, discounted_rewards)
 
-        if episode > 0 and episode % 200 == 0:
+        if episode > 0 and episode % 500 == 0:
             model.save()
             model.plot()
             print("model saved {0}".format(episode))
