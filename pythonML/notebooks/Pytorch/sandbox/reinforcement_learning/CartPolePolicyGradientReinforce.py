@@ -20,9 +20,10 @@ def running_mean(x, N=50):
 
 def discount_rewards(rewards, gamma=0.99):
     lenr = len(rewards)
-    disc_return = torch.pow(gamma, torch.arange(lenr).float()) * rewards  # A Compute exponentially decaying rewards
-    disc_return /= disc_return.max()  # B Normalize the rewards to be within the [0,1] interval to improve numerical stability
-    return disc_return
+    discounted_rewards = torch.pow(gamma, torch.arange(lenr).float()) * rewards  # A Compute exponentially decaying rewards
+    discounted_rewards -= torch.mean(discounted_rewards)
+    discounted_rewards /= torch.std(discounted_rewards)
+    return discounted_rewards
 
 
 # A The loss function expects an array of action probabilities for the actions that were taken and the discounted rewards.

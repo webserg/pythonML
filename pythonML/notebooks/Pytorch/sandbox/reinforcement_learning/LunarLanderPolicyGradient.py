@@ -16,7 +16,7 @@ from matplotlib import pylab as plt
 
 
 class NetConfig:
-    file_path = '../models/LunarLanderPolicyGradient3.pt'
+    file_path = '../models/LunarLanderPolicyGradient4.pt'
     learning_rate = 1e-3
     l1 = 8
     l2 = 16
@@ -44,6 +44,7 @@ class PolicyGradientNet(nn.Module):
         x = torch.from_numpy(x).float()
         x = F.normalize(x, dim=0)
         x = F.leaky_relu_(self.fc1(x))
+        # x = F.dropout(x)
         x = F.leaky_relu_(self.fc2(x))
         x = F.leaky_relu_(self.fc3(x))
         x = F.softmax(self.fc4(x), dim=0)  # COutput is a softmax probability distribution over actions
@@ -85,7 +86,7 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
     config = NetConfig()
     model = PolicyGradientNet(config)
-    MAX_EPISODES = 3000
+    MAX_EPISODES = 2000
     gamma = 0.99
 
     time_steps = []
