@@ -56,8 +56,9 @@ class LunarLanderReinforceNet(nn.Module):
         self.fc3 = nn.Linear(config.l3, config.l4)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = F.normalize(x, dim=0)
+        x = F.leaky_relu_(self.fc1(x))
+        x = F.leaky_relu_(self.fc2(x))
         x = self.fc3(x)
         x = F.softmax(x, dim=0)  # COutput is a softmax probability distribution over actions
         return x
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     actions = [0, 1, 2, 3]
 
     MAX_DUR = 200
-    MAX_EPISODES = 1000
+    MAX_EPISODES = 2500
     score = []  # A List to keep track of the episode length over training time
     expectation = 0.0
     for episode in range(MAX_EPISODES):

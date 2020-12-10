@@ -55,7 +55,7 @@ class PolicyGradientNet(nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        loss = loss / len(x)
+        # loss = loss / len(x)
         self.losses.append(loss.detach().item())
 
     def save(self):
