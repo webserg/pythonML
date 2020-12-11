@@ -76,13 +76,13 @@ class PGConvNet(nn.Module):
         plt.show()
 
 
-def get_cart_location(screen_width):
+def get_cart_location(env, screen_width):
     world_width = env.x_threshold * 2
     scale = screen_width / world_width
     return int(env.state[0] * scale + screen_width / 2.0)  # MIDDLE OF CART
 
 
-def get_screen():
+def get_screen(env):
     # Returned screen requested by gym is 400x600x3, but is sometimes larger
     # such as 800x1200x3. Transpose it into torch order (CHW).
     screen = env.render(mode='rgb_array').transpose((2, 0, 1))
@@ -90,7 +90,7 @@ def get_screen():
     _, screen_height, screen_width = screen.shape
     screen = screen[:, int(screen_height * 0.4):int(screen_height * 0.8)]
     view_width = int(screen_width * 0.6)
-    cart_location = get_cart_location(screen_width)
+    cart_location = get_cart_location(env, screen_width)
     if cart_location < view_width // 2:
         slice_range = slice(view_width)
     elif cart_location > (screen_width - view_width // 2):
@@ -110,24 +110,26 @@ def get_screen():
 
 def test_image_plot():
     plt.figure()
-    plt.imshow(get_screen().cpu().squeeze(0).permute(1, 2, 0).numpy(),
+    plt.imshow(get_screen(env).cpu().squeeze(0).permute(1, 2, 0).numpy(),
                interpolation='none')
     plt.title('Example extracted screen')
     plt.show()
 
 
+resize = T.Compose([T.ToPILImage(),
+                    T.Resize(40, interpolation=Image.CUBIC),
+                    T.ToTensor()])
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 if __name__ == '__main__':
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    resize = T.Compose([T.ToPILImage(),
-                        T.Resize(40, interpolation=Image.CUBIC),
-                        T.ToTensor()])
 
     env = gym.make('CartPole-v0').unwrapped
     env.reset()
     # test_image_plot()
-    init_screen = get_screen()
+    init_screen = get_screen(env)
     _, _, screen_height, screen_width = init_screen.shape
 
     n_actions = env.action_space.n
@@ -144,9 +146,8 @@ if __name__ == '__main__':
         step_counter = 0
 
         env.reset()
-        prev_state = get_screen()
-        current_screen = get_screen()
-
+        prev_state = get_screen(env)
+        current_screen = get_screen(env)
 
         while not done:
             step_counter += 1
@@ -155,7 +156,7 @@ if __name__ == '__main__':
             action = np.random.choice(np.array([0, 1]), p=act_prob.cpu().data.numpy())
             prev_state = curr_state
             _, reward, done, info = env.step(action)
-            current_screen = get_screen()
+            current_screen = get_screen(env)
             total_reward += reward
             transitions.append((prev_state, action, reward))
 

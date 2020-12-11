@@ -15,9 +15,9 @@ if __name__ == '__main__':
         j+=1
         state_ = np.array(env.env.state)
         state = torch.from_numpy(state_).float()
-        qval = model(state)
-        qval_ = qval.data.numpy()
-        action = np.argmax(qval_)
+        act_prob = model(state)
+        act_prob = act_prob.data.numpy()
+        action = np.random.choice(np.array([0, 1]), p=act_prob)
         state2, reward, done, info = env.step(action)
         if done:
             print("Lost step = " + str(j))
