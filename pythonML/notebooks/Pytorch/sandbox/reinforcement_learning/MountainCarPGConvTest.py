@@ -7,7 +7,7 @@ from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarPGConv
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     env = gym.make('MountainCar-v0').unwrapped
-    env.reset()
+    observation = env.reset()
     init_screen = get_screen(env)
     _, _, screen_height, screen_width = init_screen.shape
     n_actions = env.action_space.n

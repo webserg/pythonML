@@ -49,8 +49,11 @@ class PGConvNet(nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        del loss
+        del target
+        del x
         # loss = loss / len(x)
-        self.losses.append(loss.detach().to(self.device).item())
+        # self.losses.append(loss.detach().to(self.device).item())
 
     def loss_fn(self, preds, r):
         # pred is output from neural network, a is action index
@@ -84,7 +87,7 @@ def get_screen(env):
     screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
     screen = torch.from_numpy(screen)
     # Resize, and add a batch dimension (BCHW)
-    return resize(screen).unsqueeze(0).to(device)
+    return resize(screen).unsqueeze(0)
 
 
 def test_image_plot(env):
@@ -108,39 +111,41 @@ if __name__ == '__main__':
     env.reset()
     init_screen = get_screen(env)
     _, _, screen_height, screen_width = init_screen.shape
+    del init_screen
     # test_image_plot(env)
 
     n_actions = env.action_space.n
     actions_list = np.array([i for i in range(n_actions)])
     model = PGConvNet(screen_height, screen_width, n_actions).to(device)
-    MAX_EPISODES = 500
+    MAX_EPISODES = 50
     gamma = 0.99
 
-    time_steps = []
     for episode in range(MAX_EPISODES):
 
         done = False
         transitions = []  # list of state, action, rewards
-        total_reward = 0
         step_counter = 0
 
         env.reset()
-        prev_state = get_screen(env)
-        current_screen = get_screen(env)
+        prev_state = get_screen(env).to(device)
         while not done:
             step_counter += 1
-            curr_state = current_screen - prev_state
+            curr_state = get_screen(env).to(device) - prev_state
             act_prob = model(curr_state)
-            action = np.random.choice(actions_list, p=act_prob.cpu().data.numpy())
+            action = np.random.choice(actions_list, p=act_prob.detach().cpu().data.numpy())
             prev_state = curr_state
-            _, reward, done, info = env.step(action)
-            current_screen = get_screen(env)
-            total_reward += reward
+            del curr_state
+            _, reward, done, _ = env.step(action)
+            # if step_counter > 4000:
+            #     reward = -100
+            #     done = True
             transitions.append((prev_state, action, reward))
+            # print("{0} {1} {2}".format(step_counter, action, reward))
 
+        print(episode)
+        print(step_counter)
         # Optimize policy network with full episode
         ep_len = len(transitions)  # episode length
-        time_steps.append(ep_len)
         preds = torch.zeros(ep_len).to(device)
         discounted_rewards = torch.zeros(ep_len)
 
@@ -154,13 +159,17 @@ if __name__ == '__main__':
             pred = model(state)
             preds[step] = pred[action]
 
+        del transitions
         discounted_rewards -= torch.mean(discounted_rewards)
         discounted_rewards /= torch.std(discounted_rewards)
         model.fit(preds, discounted_rewards)
 
-        if episode > 0 and episode % 100 == 0:
+        del preds
+        del discounted_rewards
+
+        if episode > 0 and episode % 10 == 0:
             model.save()
-            model.plot()
+            # model.plot()
             print("model saved {0}".format(episode))
 
     model.plot()
