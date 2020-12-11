@@ -15,13 +15,13 @@ import torchvision.transforms as T
 
 
 class PGConvNet(nn.Module):
-    file_path = '../models/CartPolePGConv.pt'
+    file_path = '../models/MountainCarPGConv.pt'
     learning_rate = 1e-3
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def __init__(self, h, w, outputs):
         super(PGConvNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 16, kernel_size=5, stride=2)
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=5, stride=2)
         self.bn1 = nn.BatchNorm2d(16)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=5, stride=2)
         self.bn2 = nn.BatchNorm2d(32)
@@ -76,32 +76,11 @@ class PGConvNet(nn.Module):
         plt.show()
 
 
-def get_cart_location(env, screen_width):
-    world_width = env.x_threshold * 2
-    scale = screen_width / world_width
-    return int(env.state[0] * scale + screen_width / 2.0)  # MIDDLE OF CART
-
-
 def get_screen(env):
-    # Returned screen requested by gym is 400x600x3, but is sometimes larger
-    # such as 800x1200x3. Transpose it into torch order (CHW).
+    # Transpose it into torch order (CHW).
     screen = env.render(mode='rgb_array').transpose((2, 0, 1))
     # Cart is in the lower half, so strip off the top and bottom of the screen
     _, screen_height, screen_width = screen.shape
-    screen = screen[:, int(screen_height * 0.4):int(screen_height * 0.8)]
-    view_width = int(screen_width * 0.6)
-    cart_location = get_cart_location(env, screen_width)
-    if cart_location < view_width // 2:
-        slice_range = slice(view_width)
-    elif cart_location > (screen_width - view_width // 2):
-        slice_range = slice(-view_width, None)
-    else:
-        slice_range = slice(cart_location - view_width // 2,
-                            cart_location + view_width // 2)
-    # Strip off the edges, so that we have a square image centered on a cart
-    screen = screen[:, :, slice_range]
-    # Convert to float, rescale, convert to torch tensor
-    # (this doesn't require a copy)
     screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
     screen = torch.from_numpy(screen)
     # Resize, and add a batch dimension (BCHW)
@@ -110,13 +89,14 @@ def get_screen(env):
 
 def test_image_plot(env):
     plt.figure()
-    plt.imshow(get_screen(env).cpu().squeeze(0).permute(1, 2, 0).numpy(),
-               interpolation='none')
+    plt.gray()
+    plt.imshow(get_screen(env).cpu().squeeze(0).permute(1, 2, 0).numpy(), cmap='gray', vmin=0, vmax=255)
     plt.title('Example extracted screen')
     plt.show()
 
 
 resize = T.Compose([T.ToPILImage(),
+                    T.Grayscale(num_output_channels=1),
                     T.Resize(40, interpolation=Image.CUBIC),
                     T.ToTensor()])
 
@@ -124,15 +104,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == '__main__':
 
-
-
-    env = gym.make('CartPole-v0').unwrapped
+    env = gym.make('MountainCar-v0').unwrapped
     env.reset()
-    # test_image_plot()
     init_screen = get_screen(env)
     _, _, screen_height, screen_width = init_screen.shape
+    # test_image_plot(env)
 
     n_actions = env.action_space.n
+    actions_list = np.array([i for i in range(n_actions)])
     model = PGConvNet(screen_height, screen_width, n_actions).to(device)
     MAX_EPISODES = 500
     gamma = 0.99
@@ -148,12 +127,11 @@ if __name__ == '__main__':
         env.reset()
         prev_state = get_screen(env)
         current_screen = get_screen(env)
-
         while not done:
             step_counter += 1
             curr_state = current_screen - prev_state
             act_prob = model(curr_state)
-            action = np.random.choice(np.array([0, 1]), p=act_prob.cpu().data.numpy())
+            action = np.random.choice(actions_list, p=act_prob.cpu().data.numpy())
             prev_state = curr_state
             _, reward, done, info = env.step(action)
             current_screen = get_screen(env)

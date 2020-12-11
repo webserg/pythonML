@@ -1,18 +1,17 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePGConv import PGConvNet
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePGConv import get_screen
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePGConv import test_image_plot
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarPGConv import PGConvNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarPGConv import get_screen
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    env = gym.make('CartPole-v0').unwrapped
+    env = gym.make('MountainCar-v0').unwrapped
     env.reset()
     init_screen = get_screen(env)
     _, _, screen_height, screen_width = init_screen.shape
-    test_image_plot(env)
     n_actions = env.action_space.n
+    actions_list = np.array([i for i in range(n_actions)])
     model = PGConvNet(screen_height, screen_width, n_actions).to(device)
     print(model)
     model.load()
@@ -25,7 +24,7 @@ if __name__ == '__main__':
         j += 1
         curr_state = current_screen - prev_state
         act_prob = model(curr_state)
-        action = np.random.choice(np.array([0, 1]), p=act_prob.cpu().data.numpy())
+        action = np.random.choice(actions_list, p=act_prob.cpu().data.numpy())
         prev_state = curr_state
         _, reward, done, info = env.step(action)
         current_screen = get_screen(env)
