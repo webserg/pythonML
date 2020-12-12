@@ -11,6 +11,8 @@ if __name__ == '__main__':
     print(model)
     model.load()
     env = gym.make("MountainCar-v0")
+    n_actions = env.action_space.n
+    actions_list = np.array([i for i in range(n_actions)])
     state = env.reset()
     game_reward = 0
     total_reward = 0
@@ -18,14 +20,16 @@ if __name__ == '__main__':
     game_counter = 0
     j=0
     while game_counter < total_games:
+        env.render()
         j += 1
         pred = model(state)  # G
-        action = np.random.choice(np.array([0, 1 ,2 ]), p=pred.data.numpy())  # H
+        action = np.random.choice(actions_list, p=pred.data.numpy())  # H
         # action = np.argmax(pred.data.numpy())
-        env.render()
         state2, reward, done, info = env.step(action)  # I
         state1 = state2
         game_reward += reward
+        if j > 4000:
+            done = True
         if done:
             game_counter += 1
             print("Lost step = {0} reward {1}".format(j, game_reward))
@@ -34,6 +38,5 @@ if __name__ == '__main__':
             total_reward += game_reward
             game_reward = 0
         state = state2
-        env.render()
     print(" avg reward {0}".format(total_reward / game_counter))
     env.close()

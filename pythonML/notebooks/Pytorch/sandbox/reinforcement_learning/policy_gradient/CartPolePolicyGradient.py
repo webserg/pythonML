@@ -14,7 +14,7 @@ def running_mean(x, N=50):
 def loss_fn(preds, r):
     # pred is output from neural network, a is action index
     # r is return (sum of rewards to end of episode), d is discount factor
-    return -torch.sum(r * torch.log(preds))  # element-wise multipliy, then sum
+    return -torch.sum(r * torch.log(preds)) / len(r)  # element-wise multipliy, then sum
 
 
 class CartPolePolicyGradientNet(nn.Module):
@@ -78,15 +78,15 @@ if __name__ == '__main__':
         preds = torch.zeros(ep_len)
         discounted_rewards = torch.zeros(ep_len)
         discounted_reward = 0
-        discount = 1
         for step in reversed(range(ep_len)):  # for each step in episode
             state, action, step_reward = transitions[step]
-            discounted_reward += step_reward * discount
-            discount = discount * gamma
+            discounted_reward = discounted_reward * gamma + step_reward
             discounted_rewards[step] = discounted_reward
             pred = model(torch.from_numpy(state).float())
             preds[step] = pred[action]
 
+        discounted_rewards -= torch.mean(discounted_rewards)
+        discounted_rewards /= torch.std(discounted_rewards)
         loss = loss_fn(preds, discounted_rewards)
         model.losses.append(loss.detach().item())
         optimizer.zero_grad()
@@ -102,4 +102,4 @@ if __name__ == '__main__':
     plt.show()
 
     torch.save(model.state_dict(), '../../models/cartPolePolicyGradient.pt')
-    model.plot()
+    # model.plot()

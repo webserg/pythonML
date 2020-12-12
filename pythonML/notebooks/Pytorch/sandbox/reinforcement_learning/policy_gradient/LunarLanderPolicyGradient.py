@@ -17,7 +17,7 @@ from matplotlib import pylab as plt
 
 class NetConfig:
     file_path = '../../models/LunarLanderPolicyGradient4.pt'
-    learning_rate = 1e-3
+    learning_rate = 0.0009
     l1 = 8
     l2 = 16
     l3 = 16
@@ -86,7 +86,7 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
     config = NetConfig()
     model = PolicyGradientNet(config)
-    MAX_EPISODES = 1500
+    MAX_EPISODES = 1200
     gamma = 0.99
 
     time_steps = []
@@ -112,11 +112,9 @@ if __name__ == '__main__':
         discounted_rewards = torch.zeros(ep_len)
 
         discounted_reward = 0
-        discount = 1
         for step in reversed(range(ep_len)):  # for each step in episode
             state, action, step_reward = transitions[step]
-            discounted_reward += step_reward * discount
-            discount = discount * gamma
+            discounted_reward = discounted_reward * gamma + step_reward
             discounted_rewards[step] = discounted_reward
             pred = model(state)
             preds[step] = pred[action]
@@ -125,11 +123,11 @@ if __name__ == '__main__':
         discounted_rewards /= torch.std(discounted_rewards)
         model.fit(preds, discounted_rewards)
 
-        if episode > 0 and episode % 500 == 0:
+        if episode > 0 and episode % 100 == 0:
             model.save()
-            model.plot()
+            # model.plot()
             print("model saved {0}".format(episode))
 
-    model.plot()
+    # model.plot()
     env.close()
     model.save()

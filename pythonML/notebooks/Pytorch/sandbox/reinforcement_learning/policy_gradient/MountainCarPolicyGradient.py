@@ -80,7 +80,7 @@ if __name__ == '__main__':
     env = gym.make('MountainCar-v0')
     config = NetConfig()
     model = PolicyGradientNet(config)
-    MAX_EPISODES = 2000
+    MAX_EPISODES = 3000
     gamma = 0.99
 
     time_steps = []
@@ -88,14 +88,13 @@ if __name__ == '__main__':
         curr_state = env.reset()
         done = False
         transitions = []  # list of state, action, rewards
-        total_reward = 0
-
+        step_counter = 0
         while not done:
+            step_counter += 1
             act_prob = model(curr_state)
             action = np.random.choice(np.array([0, 1, 2]), p=act_prob.data.numpy())
             prev_state = curr_state
             curr_state, reward, done, info = env.step(action)
-            total_reward += reward
             transitions.append((prev_state, action, reward))
 
         # Optimize policy network with full episode
@@ -105,11 +104,9 @@ if __name__ == '__main__':
         discounted_rewards = torch.zeros(ep_len)
 
         discounted_reward = 0
-        discount = 1
         for step in reversed(range(ep_len)):  # for each step in episode
             state, action, step_reward = transitions[step]
-            discounted_reward += step_reward * discount
-            discount = discount * gamma
+            discounted_reward = discounted_reward * gamma + step_reward
             discounted_rewards[step] = discounted_reward
             pred = model(state)
             preds[step] = pred[action]
@@ -120,7 +117,7 @@ if __name__ == '__main__':
 
         if episode > 0 and episode % 1000 == 0:
             model.save()
-            model.plot()
+            # model.plot()
             print("model saved {0}".format(episode))
 
     model.plot()

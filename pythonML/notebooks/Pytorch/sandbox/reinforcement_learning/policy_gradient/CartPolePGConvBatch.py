@@ -78,21 +78,18 @@ class PGConvNet(nn.Module):
 
 def discount_rewards(rewards, gamma=0.99):
     lenr = len(rewards)
-    rewards = torch.pow(gamma, torch.arange(lenr).float()) * rewards  # A Compute exponentially decaying rewards
-    # rewards -= torch.mean(rewards)
-    # rewards /= torch.std(rewards)
+    discount_ret = torch.pow(gamma, torch.arange(lenr).float()) * rewards  # A Compute exponentially decaying rewards
+    discount_ret /= discount_ret.max()
     return rewards
 
 
 def discount_rewards_array(gamma=0.99):
     ep_len = len(transitions)
     discounted_reward = 0
-    discount = 1
     discounted_rewards = torch.zeros(ep_len)
     for step in reversed(range(ep_len)):
         _, _, step_reward = transitions[step]
-        discounted_reward += step_reward * discount
-        discount = discount * gamma
+        discounted_reward = discounted_reward * gamma + step_reward
         discounted_rewards[step] = discounted_reward
     return discounted_rewards
 
@@ -154,7 +151,7 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
     actions_list = np.array([i for i in range(n_actions)])
     model = PGConvNet(screen_height, screen_width, n_actions).to(device)
-    MAX_EPISODES = 1000
+    MAX_EPISODES = 500
     gamma = 0.99
 
     time_steps = []
@@ -174,9 +171,6 @@ if __name__ == '__main__':
             action = np.random.choice(actions_list, p=act_prob.cpu().data.numpy())
             prev_state = curr_state
             _, reward, done, _ = env.step(action)
-            # if done:
-            #     reward = 100
-            #     action = 8
             transitions.append((prev_state, action, reward))
 
         # Optimize policy network with full episode

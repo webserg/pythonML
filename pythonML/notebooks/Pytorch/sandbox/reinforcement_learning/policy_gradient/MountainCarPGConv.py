@@ -107,7 +107,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == '__main__':
 
-    env = gym.make('MountainCar-v0').unwrapped
+    env = gym.make('MountainCar-v0')
     env.reset()
     init_screen = get_screen(env)
     _, _, screen_height, screen_width = init_screen.shape
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
     actions_list = np.array([i for i in range(n_actions)])
     model = PGConvNet(screen_height, screen_width, n_actions).to(device)
-    MAX_EPISODES = 50
+    MAX_EPISODES = 1000
     gamma = 0.99
 
     for episode in range(MAX_EPISODES):
@@ -137,25 +137,23 @@ if __name__ == '__main__':
             prev_state = curr_state
             del curr_state
             _, reward, done, _ = env.step(action)
-            if step_counter > 1000:
-                reward = -100
+            if step_counter > 4000:
                 done = True
             transitions.append((prev_state, action, reward))
+            del current_screen
             # print("{0} {1} {2}".format(step_counter, action, reward))
 
-        print(episode)
-        print(step_counter)
+        # print(episode)
+        # print(step_counter)
         # Optimize policy network with full episode
         ep_len = len(transitions)  # episode length
         preds = torch.zeros(ep_len).to(device)
         discounted_rewards = torch.zeros(ep_len)
 
         discounted_reward = 0
-        discount = 1
         for step in reversed(range(ep_len)):  # for each step in episode
             state, action, step_reward = transitions[step]
-            discounted_reward += step_reward * discount
-            discount = discount * gamma
+            discounted_reward = discounted_reward * gamma + step_reward
             discounted_rewards[step] = discounted_reward
             pred = model(state)
             preds[step] = pred[action]
@@ -168,7 +166,7 @@ if __name__ == '__main__':
         del preds
         del discounted_rewards
 
-        if episode > 0 and episode % 10 == 0:
+        if episode > 0 and episode % 200 == 0:
             model.save()
             # model.plot()
             print("model saved {0}".format(episode))

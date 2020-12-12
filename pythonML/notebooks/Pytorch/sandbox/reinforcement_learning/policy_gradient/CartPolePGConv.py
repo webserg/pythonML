@@ -122,6 +122,13 @@ resize = T.Compose([T.ToPILImage(),
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
+def normalize_rewards(future_rewards):
+    future_rewards -= torch.mean(future_rewards)
+    future_rewards /= torch.std(future_rewards)
+    return future_rewards
+
+
 if __name__ == '__main__':
 
 
@@ -164,7 +171,7 @@ if __name__ == '__main__':
         ep_len = len(transitions)  # episode length
         time_steps.append(ep_len)
         preds = torch.zeros(ep_len).to(device)
-        discounted_rewards = torch.zeros(ep_len)
+        future_rewards = torch.zeros(ep_len)
 
         discounted_reward = 0
         discount = 1
@@ -172,13 +179,12 @@ if __name__ == '__main__':
             state, action, step_reward = transitions[step]
             discounted_reward += step_reward * discount
             discount = discount * gamma
-            discounted_rewards[step] = discounted_reward
+            future_rewards[step] = discounted_reward
             pred = model(state)
             preds[step] = pred[action]
 
-        discounted_rewards -= torch.mean(discounted_rewards)
-        discounted_rewards /= torch.std(discounted_rewards)
-        model.fit(preds, discounted_rewards)
+        future_rewards = normalize_rewards(future_rewards)
+        model.fit(preds, future_rewards)
 
         if episode > 0 and episode % 100 == 0:
             model.save()
