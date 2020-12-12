@@ -136,9 +136,9 @@ if __name__ == '__main__':
             prev_state = curr_state
             del curr_state
             _, reward, done, _ = env.step(action)
-            # if step_counter > 4000:
-            #     reward = -100
-            #     done = True
+            if step_counter > 4000:
+                reward = -100
+                done = True
             transitions.append((prev_state, action, reward))
             # print("{0} {1} {2}".format(step_counter, action, reward))
 
