@@ -2,12 +2,12 @@ import gym
 import numpy as np
 import torch
 from matplotlib import pylab as plt
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePolicyGradientReinforce import CartPoleDeepRLNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.CartPolePolicyGradientReinforce import CartPoleDeepRLNet
 
 if __name__ == '__main__':
     model = CartPoleDeepRLNet()
     print(model)
-    model.load_state_dict(torch.load('../models/cartPoleRLModel.pt'))
+    model.load_state_dict(torch.load('../../models/cartPoleRLModel.pt'))
 
     env = gym.make("CartPole-v0")
 

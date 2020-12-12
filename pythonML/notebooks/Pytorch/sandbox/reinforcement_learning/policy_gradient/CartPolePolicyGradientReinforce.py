@@ -121,4 +121,4 @@ if __name__ == '__main__':
     plt.plot(avg_score, color='green')
     plt.show()
 
-    torch.save(model.state_dict(), '../models/cartPoleRLModel.pt')
+    torch.save(model.state_dict(), '../../models/cartPoleRLModel.pt')

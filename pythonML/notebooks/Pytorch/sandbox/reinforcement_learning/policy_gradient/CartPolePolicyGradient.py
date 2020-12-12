@@ -93,4 +93,4 @@ if __name__ == '__main__':
     plt.plot(running_mean(time_steps, 50), color='green')
     plt.show()
 
-    torch.save(model.state_dict(), '../models/cartPolePolicyGradient.pt')
+    torch.save(model.state_dict(), '../../models/cartPolePolicyGradient.pt')

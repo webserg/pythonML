@@ -15,7 +15,7 @@ import torchvision.transforms as T
 
 
 class PGConvNet(nn.Module):
-    file_path = '../models/CartPolePGConv.pt'
+    file_path = '../../models/CartPolePGConv.pt'
     learning_rate = 1e-3
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

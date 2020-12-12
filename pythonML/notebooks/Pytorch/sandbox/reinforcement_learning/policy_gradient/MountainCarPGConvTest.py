@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarPGConv import PGConvNet
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarPGConv import get_screen
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.MountainCarPGConv import PGConvNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.MountainCarPGConv import get_screen
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

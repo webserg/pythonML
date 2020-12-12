@@ -1,9 +1,9 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePGConv import PGConvNet
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePGConv import get_screen
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePGConv import test_image_plot
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.CartPolePGConv import PGConvNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.CartPolePGConv import get_screen
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.CartPolePGConv import test_image_plot
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

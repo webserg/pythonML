@@ -35,7 +35,7 @@ def plot(epoch_history, loss_history):
 
 
 class NetConfig:
-    file_path = '../models/LunarLanderPGReinforce.pt'
+    file_path = '../../models/LunarLanderPGReinforce.pt'
     l1 = 8
     l2 = 16
     l3 = 16

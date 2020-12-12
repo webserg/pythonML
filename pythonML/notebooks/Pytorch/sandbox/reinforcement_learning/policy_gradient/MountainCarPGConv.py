@@ -15,7 +15,7 @@ import torchvision.transforms as T
 
 
 class PGConvNet(nn.Module):
-    file_path = '../models/MountainCarPGConv.pt'
+    file_path = '../../models/MountainCarPGConv.pt'
     learning_rate = 1e-3
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -130,13 +130,14 @@ if __name__ == '__main__':
         prev_state = get_screen(env).to(device)
         while not done:
             step_counter += 1
-            curr_state = get_screen(env).to(device) - prev_state
+            current_screen = get_screen(env).to(device)
+            curr_state = current_screen - prev_state
             act_prob = model(curr_state)
             action = np.random.choice(actions_list, p=act_prob.detach().cpu().data.numpy())
             prev_state = curr_state
             del curr_state
             _, reward, done, _ = env.step(action)
-            if step_counter > 4000:
+            if step_counter > 1000:
                 reward = -100
                 done = True
             transitions.append((prev_state, action, reward))

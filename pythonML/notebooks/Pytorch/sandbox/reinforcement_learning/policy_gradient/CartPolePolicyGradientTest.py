@@ -2,7 +2,7 @@ import gym
 import numpy as np
 import torch
 from matplotlib import pylab as plt
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPolePolicyGradient import CartPolePolicyGradientNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.CartPolePolicyGradient import CartPolePolicyGradientNet
 
 if __name__ == '__main__':
     model = CartPolePolicyGradientNet()

@@ -16,7 +16,7 @@ from matplotlib import pylab as plt
 
 
 class NetConfig:
-    file_path = '../models/LunarLanderPolicyGradient4.pt'
+    file_path = '../../models/LunarLanderPolicyGradient4.pt'
     learning_rate = 1e-3
     l1 = 8
     l2 = 16

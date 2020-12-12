@@ -10,7 +10,7 @@ from matplotlib import pylab as plt
 
 
 class NetConfig:
-    file_path = '../models/MountainCarPolicyGradient.pt'
+    file_path = '../../models/MountainCarPolicyGradient.pt'
     learning_rate = 1e-3
     l1 = 2
     l2 = 16

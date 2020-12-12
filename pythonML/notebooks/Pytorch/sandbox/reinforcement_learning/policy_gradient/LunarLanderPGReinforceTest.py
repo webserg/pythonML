@@ -2,8 +2,8 @@ import gym
 import numpy as np
 import torch
 from matplotlib import pylab as plt
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.LunarLanderPGReinforce import LunarLanderReinforceNet
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.LunarLanderPGReinforce import NetConfig
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.LunarLanderPGReinforce import LunarLanderReinforceNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.LunarLanderPGReinforce import NetConfig
 
 if __name__ == '__main__':
     config = NetConfig()
