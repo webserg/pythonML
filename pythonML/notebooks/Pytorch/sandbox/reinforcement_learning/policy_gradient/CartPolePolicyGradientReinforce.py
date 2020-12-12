@@ -21,8 +21,8 @@ def running_mean(x, N=50):
 def discount_rewards(rewards, gamma=0.99):
     lenr = len(rewards)
     discounted_rewards = torch.pow(gamma, torch.arange(lenr).float()) * rewards  # A Compute exponentially decaying rewards
-    discounted_rewards -= torch.mean(discounted_rewards)
-    discounted_rewards /= torch.std(discounted_rewards)
+    # discounted_rewards -= torch.mean(discounted_rewards)
+    # discounted_rewards /= torch.std(discounted_rewards)
     return discounted_rewards
 
 
@@ -60,7 +60,7 @@ class CartPoleDeepRLNet(nn.Module):
 if __name__ == '__main__':
     model = CartPoleDeepRLNet()
     print(model)
-    learning_rate = 0.009
+    learning_rate = 0.0009
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     env = gym.make("CartPole-v0")
 

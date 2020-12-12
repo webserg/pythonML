@@ -26,6 +26,7 @@ class CartPolePolicyGradientNet(nn.Module):
         l3 = 2  # B Output is a 2-length vector for the Left and the Right actions
         self.fc1 = nn.Linear(l1, l2)
         self.fc2 = nn.Linear(l2, l3)
+        self.losses = []  # A
 
     def forward(self, x):
         x = self.fc1(x)
@@ -33,6 +34,13 @@ class CartPolePolicyGradientNet(nn.Module):
         x = self.fc2(x)
         x = F.softmax(x, dim=0)  # COutput is a softmax probability distribution over actions
         return x
+
+    def plot(self):
+        plt.figure(figsize=(10, 7))
+        plt.plot(self.losses)
+        plt.xlabel("Epochs", fontsize=22)
+        plt.ylabel("Loss", fontsize=22)
+        plt.show()
 
 
 if __name__ == '__main__':
@@ -48,7 +56,7 @@ if __name__ == '__main__':
     env = gym.make('CartPole-v0')
     MAX_DUR = 200
     MAX_EPISODES = 500
-    gamma_ = 0.99
+    gamma = 0.99
     time_steps = []
     for episode in range(MAX_EPISODES):
         curr_state = env.reset()
@@ -69,18 +77,18 @@ if __name__ == '__main__':
         time_steps.append(ep_len)
         preds = torch.zeros(ep_len)
         discounted_rewards = torch.zeros(ep_len)
-        for i in range(ep_len):  # for each step in episode
-            discount = 1
-            future_reward = 0
-            # discount rewards
-            for i2 in range(i, ep_len):
-                future_reward += transitions[i2][2] * discount
-                discount = discount * gamma_
-            discounted_rewards[i] = future_reward
-            state, action, _ = transitions[i]
+        discounted_reward = 0
+        discount = 1
+        for step in reversed(range(ep_len)):  # for each step in episode
+            state, action, step_reward = transitions[step]
+            discounted_reward += step_reward * discount
+            discount = discount * gamma
+            discounted_rewards[step] = discounted_reward
             pred = model(torch.from_numpy(state).float())
-            preds[i] = pred[action]
+            preds[step] = pred[action]
+
         loss = loss_fn(preds, discounted_rewards)
+        model.losses.append(loss.detach().item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -94,3 +102,4 @@ if __name__ == '__main__':
     plt.show()
 
     torch.save(model.state_dict(), '../../models/cartPolePolicyGradient.pt')
+    model.plot()
