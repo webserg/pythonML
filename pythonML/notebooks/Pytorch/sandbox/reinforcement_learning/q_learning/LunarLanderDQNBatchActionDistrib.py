@@ -95,7 +95,7 @@ if __name__ == '__main__':
                 #     print("state = {0} reward = {1} done = {2} info = {3} ".format(state2, reward, done, info))
 
         if i % 500 == 0:
-            torch.save(model.state_dict(), '../models/LunarLanderDQNBatchActionDistib.pt')
+            torch.save(model.state_dict(), '../../models/LunarLanderDQNBatchActionDistib.pt')
             print("model saved {0}".format(i))
 
     plt.figure(figsize=(10, 7))
@@ -105,4 +105,4 @@ if __name__ == '__main__':
     plt.show()
     env.close()
 
-    torch.save(model.state_dict(), '../models/LunarLanderDQNBatchActionDistib.pt')
+    torch.save(model.state_dict(), '../../models/LunarLanderDQNBatchActionDistib.pt')

@@ -114,4 +114,4 @@ if __name__ == '__main__':
     plt.show()
     env.close()
 
-    torch.save(model.state_dict(), '../models/cartPoleDQN.pt')
+    torch.save(model.state_dict(), '../../models/cartPoleDQN.pt')

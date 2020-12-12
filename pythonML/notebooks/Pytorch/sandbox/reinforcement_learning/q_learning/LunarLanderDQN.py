@@ -10,7 +10,7 @@ from matplotlib import pylab as plt
 
 
 class DQNet(nn.Module):
-    file_path = '../models/LunarLanderDQN.pt'
+    file_path = '../../models/LunarLanderDQN.pt'
 
     def __init__(self):
         super(DQNet, self).__init__()

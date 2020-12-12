@@ -4,7 +4,7 @@ import torch
 from IPython.display import clear_output
 import random
 from matplotlib import pylab as plt
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.Gridworld import Gridworld
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.q_learning.Gridworld import Gridworld
 
 """
 catastrofic forgettin when agen see similar position but goes to different results but agen makes the same action. Since result different 

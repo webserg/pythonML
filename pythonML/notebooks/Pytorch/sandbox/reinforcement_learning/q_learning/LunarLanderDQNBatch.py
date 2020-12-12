@@ -42,10 +42,10 @@ class DQNet(nn.Module):
         self.optimizer.step()
 
     def save(self):
-        torch.save(self.state_dict(), '../models/lunarLanderDQNBatch.pt')
+        torch.save(self.state_dict(), '../../models/lunarLanderDQNBatch.pt')
 
     def load(self):
-        self.load_state_dict(torch.load('../models/lunarLanderDQNBatch.pt'))
+        self.load_state_dict(torch.load('../../models/lunarLanderDQNBatch.pt'))
 
     def plot(self):
         plt.figure(figsize=(10, 7))

@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarDQN import DQNet
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.MountainCarDQN import NetConfig
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.q_learning.MountainCarDQN import DQNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.q_learning.MountainCarDQN import NetConfig
 
 if __name__ == '__main__':
     cuda = torch.device("cuda")
@@ -10,7 +10,7 @@ if __name__ == '__main__':
     config = NetConfig
     model = DQNet(config)  # A
     print(model)
-    model.load_state_dict(torch.load('../models/mountainCarDQN.pt'))
+    model.load_state_dict(torch.load('../../models/mountainCarDQN.pt'))
     env = gym.make("MountainCar-v0")
     env.reset()
     j = 0

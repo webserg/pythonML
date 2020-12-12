@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.LunarLanderDQNBatch import DQNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.q_learning.LunarLanderDQNBatch import DQNet
 
 if __name__ == '__main__':
     model = DQNet()  # A

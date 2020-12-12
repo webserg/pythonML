@@ -1,4 +1,4 @@
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.GridBoard import *
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.q_learning.GridBoard import *
 
 
 class Gridworld:

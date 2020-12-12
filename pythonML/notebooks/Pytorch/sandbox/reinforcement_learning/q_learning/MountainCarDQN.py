@@ -16,7 +16,7 @@ from matplotlib import pylab as plt
 
 
 class NetConfig:
-    file_path = '../models/mountainCarDQN.pt'
+    file_path = '../../models/mountainCarDQN.pt'
     cuda = torch.device("cuda")
     cpu = torch.device("cpu")
     learning_rate = 1e-3

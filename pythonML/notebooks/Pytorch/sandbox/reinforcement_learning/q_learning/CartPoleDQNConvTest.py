@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPoleDQNConvNet import DQN
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.q_learning.CartPoleDQNConvNet import DQN
 
 if __name__ == '__main__':
     env = gym.make("CartPole-v0")

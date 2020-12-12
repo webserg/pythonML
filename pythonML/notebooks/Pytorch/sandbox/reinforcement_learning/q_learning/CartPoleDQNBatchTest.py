@@ -1,12 +1,12 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.CartPoleDQNBatch import DQNet
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.q_learning.CartPoleDQNBatch import DQNet
 
 if __name__ == '__main__':
     model = DQNet()  # A
     print(model)
-    model.load_state_dict(torch.load('../models/cartPoleDQNBatch2.pt'))
+    model.load_state_dict(torch.load('../../models/cartPoleDQNBatch2.pt'))
     env = gym.make("CartPole-v0")
     env.reset()
     j=0
