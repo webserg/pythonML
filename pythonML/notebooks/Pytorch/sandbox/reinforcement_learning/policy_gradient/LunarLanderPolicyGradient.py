@@ -86,7 +86,7 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
     config = NetConfig()
     model = PolicyGradientNet(config)
-    MAX_EPISODES = 2000
+    MAX_EPISODES = 1500
     gamma = 0.99
 
     time_steps = []

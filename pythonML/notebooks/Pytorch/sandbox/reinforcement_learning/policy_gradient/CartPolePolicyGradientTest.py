@@ -7,7 +7,7 @@ from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.policy_gradient.C
 if __name__ == '__main__':
     model = CartPolePolicyGradientNet()
     print(model)
-    model.load_state_dict(torch.load('../models/cartPolePolicyGradient.pt'))
+    model.load_state_dict(torch.load('../../models/cartPolePolicyGradient.pt'))
     env = gym.make("CartPole-v0")
     env.reset()
     j=0
