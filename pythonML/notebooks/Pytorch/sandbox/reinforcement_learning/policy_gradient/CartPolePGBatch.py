@@ -21,19 +21,16 @@ class CartPolePolicyGradientNet(nn.Module):
 
     def __init__(self):
         super(CartPolePolicyGradientNet, self).__init__()
-        l1 = 4  # A Input data is length 4
-        l2 = 16
-        l3 = 32
-        l4 = 2  # B Output is a 2-length vector for the Left and the Right actions
-        self.fc1 = nn.Linear(l1, l2)
-        self.fc2 = nn.Linear(l2, l3)
-        self.fc3 = nn.Linear(l3, l4)
+        input = 4  # A Input data is length 4
+        l2 = 150
+        output = 2  # B Output is a 2-length vector for the Left and the Right actions
+        self.fc1 = nn.Linear(input, l2)
+        self.fc2 = nn.Linear(l2, output)
         self.losses = []  # A
 
     def forward(self, x):
         x = F.leaky_relu_(self.fc1(x))
-        x = F.leaky_relu_(self.fc2(x))
-        x = self.fc3(x)
+        x = self.fc2(x)
         x = F.softmax(x, dim=0)  # COutput is a softmax probability distribution over actions
         return x
 
@@ -46,12 +43,12 @@ class CartPolePolicyGradientNet(nn.Module):
 
 
 def discount_rewards(rewards, gamma=0.99):
-    rewards = torch.FloatTensor(rewards)
     lenr = len(rewards)
     discount = torch.pow(gamma, torch.arange(lenr).float())
-    discount_ret = discount * torch.FloatTensor(rewards)  # A Compute exponentially decaying rewards
+    discount_ret = discount * rewards  # A Compute exponentially decaying rewards
     # discount_ret /= discount_ret.max()
     return discount_ret.cumsum(-1).flip(0)
+
 
 def discount_rewards_hubbs(rewards, gamma=0.99):
     r = np.array([gamma ** i * rewards[i]
@@ -59,13 +56,10 @@ def discount_rewards_hubbs(rewards, gamma=0.99):
     # Reverse the array direction for cumsum and then
     # revert back to the original order
     r = r.cumsum()[::-1]
-    return  torch.tensor(np.array(r))
+    return torch.tensor(np.array(r))
 
 
 if __name__ == '__main__':
-    l1 = 4
-    l2 = 150
-    l3 = 2
 
     model = CartPolePolicyGradientNet()
 
@@ -96,23 +90,27 @@ if __name__ == '__main__':
         time_steps.append(ep_len)
 
         reward_batch = torch.Tensor([r for (s, a, r) in transitions])
-        discounted_rewards = discount_rewards_hubbs(reward_batch)
+        discounted_rewards = discount_rewards(reward_batch)
 
         state_batch = torch.Tensor([s for (s, a, r) in transitions])  # L Collect the states in the episode in a single tensor
-        pred_batch = model(state_batch)
-
         action_batch = torch.Tensor([a for (s, a, r) in transitions])  # M
+
+        pred_batch = model(state_batch)
         prob_batch = pred_batch.gather(dim=1, index=action_batch.long().view(-1, 1)).squeeze()
 
-        # discounted_rewards -= torch.mean(discounted_rewards)
-        # discounted_rewards /= torch.std(discounted_rewards)
         loss = loss_fn(prob_batch, discounted_rewards)
         model.losses.append(loss.detach().item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        # del transitions
+        del reward_batch
+        del state_batch
+        del action_batch
+        del pred_batch
+        del discounted_rewards
+        del transitions
+        del prob_batch
 
     env.close()
 
