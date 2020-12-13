@@ -17,7 +17,7 @@ from matplotlib import pylab as plt
 
 class NetConfig:
     file_path = '../../models/LunarLanderPolicyGradient4.pt'
-    learning_rate = 0.0009
+    learning_rate = 0.001
     l1 = 8
     l2 = 16
     l3 = 16
@@ -86,8 +86,10 @@ if __name__ == '__main__':
     env = gym.make('LunarLander-v2')
     config = NetConfig()
     model = PolicyGradientNet(config)
-    MAX_EPISODES = 1200
+    MAX_EPISODES = 2000
     gamma = 0.99
+    n_actions = env.action_space.n
+    actions_list = np.array([i for i in range(n_actions)])
 
     time_steps = []
     for episode in range(MAX_EPISODES):
@@ -99,7 +101,7 @@ if __name__ == '__main__':
         while not done:
             step_counter+=1
             act_prob = model(curr_state)
-            action = np.random.choice(np.array([0, 1, 2, 3]), p=act_prob.data.numpy())
+            action = np.random.choice(actions_list, p=act_prob.data.numpy())
             prev_state = curr_state
             curr_state, reward, done, info = env.step(action)
             total_reward += reward

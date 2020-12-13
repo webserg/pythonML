@@ -22,16 +22,18 @@ class CartPolePolicyGradientNet(nn.Module):
     def __init__(self):
         super(CartPolePolicyGradientNet, self).__init__()
         l1 = 4  # A Input data is length 4
-        l2 = 150
-        l3 = 2  # B Output is a 2-length vector for the Left and the Right actions
+        l2 = 16
+        l3 = 32
+        l4 = 2  # B Output is a 2-length vector for the Left and the Right actions
         self.fc1 = nn.Linear(l1, l2)
         self.fc2 = nn.Linear(l2, l3)
+        self.fc3 = nn.Linear(l3, l4)
         self.losses = []  # A
 
     def forward(self, x):
-        x = self.fc1(x)
-        x = F.leaky_relu_(x)
-        x = self.fc2(x)
+        x = F.leaky_relu_(self.fc1(x))
+        x = F.leaky_relu_(self.fc2(x))
+        x = self.fc3(x)
         x = F.softmax(x, dim=0)  # COutput is a softmax probability distribution over actions
         return x
 
@@ -48,15 +50,16 @@ def discount_rewards(rewards, gamma=0.99):
     lenr = len(rewards)
     discount = torch.pow(gamma, torch.arange(lenr).float())
     discount_ret = discount * torch.FloatTensor(rewards)  # A Compute exponentially decaying rewards
+    # discount_ret /= discount_ret.max()
     return discount_ret.cumsum(-1).flip(0)
 
-
-def discounted_future_reward():
-    reward_batch = torch.Tensor([r for (s, a, r) in transitions])
-    discounted_rewards = discount_rewards(reward_batch)
-    discounted_rewards -= torch.mean(discounted_rewards)
-    discounted_rewards /= torch.std(discounted_rewards)
-    return discounted_rewards
+def discount_rewards_hubbs(rewards, gamma=0.99):
+    r = np.array([gamma ** i * rewards[i]
+                  for i in range(len(rewards))])
+    # Reverse the array direction for cumsum and then
+    # revert back to the original order
+    r = r.cumsum()[::-1]
+    return  torch.tensor(np.array(r))
 
 
 if __name__ == '__main__':
@@ -66,12 +69,12 @@ if __name__ == '__main__':
 
     model = CartPolePolicyGradientNet()
 
-    learning_rate = 0.0009
+    learning_rate = 0.001
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     env = gym.make('CartPole-v0')
     MAX_DUR = 200
-    MAX_EPISODES = 500
+    MAX_EPISODES = 1000
     gamma = 0.99
     time_steps = []
     for episode in range(MAX_EPISODES):
@@ -89,19 +92,27 @@ if __name__ == '__main__':
                 break
 
         # Optimize policy network with full episode
-        ep_len = len(transitions)
+        ep_len = len(transitions)  # episode length
         time_steps.append(ep_len)
-        preds = torch.zeros(ep_len)
-        for step in range(ep_len):  # for each step in episode
-            state, action, _ = transitions[step]
-            pred = model(torch.from_numpy(state).float())
-            preds[step] = pred[action]
 
-        loss = loss_fn(preds, discounted_future_reward())
+        reward_batch = torch.Tensor([r for (s, a, r) in transitions])
+        discounted_rewards = discount_rewards_hubbs(reward_batch)
+
+        state_batch = torch.Tensor([s for (s, a, r) in transitions])  # L Collect the states in the episode in a single tensor
+        pred_batch = model(state_batch)
+
+        action_batch = torch.Tensor([a for (s, a, r) in transitions])  # M
+        prob_batch = pred_batch.gather(dim=1, index=action_batch.long().view(-1, 1)).squeeze()
+
+        # discounted_rewards -= torch.mean(discounted_rewards)
+        # discounted_rewards /= torch.std(discounted_rewards)
+        loss = loss_fn(prob_batch, discounted_rewards)
         model.losses.append(loss.detach().item())
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+        # del transitions
 
     env.close()
 
@@ -111,5 +122,5 @@ if __name__ == '__main__':
     plt.plot(running_mean(time_steps, 50), color='green')
     plt.show()
 
-    torch.save(model.state_dict(), '../../models/cartPolePolicyGradient.pt')
+    torch.save(model.state_dict(), '../../models/cartPolePGBatch.pt')
     # model.plot()

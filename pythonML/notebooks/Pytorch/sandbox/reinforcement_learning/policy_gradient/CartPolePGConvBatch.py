@@ -77,10 +77,12 @@ class PGConvNet(nn.Module):
 
 
 def discount_rewards(rewards, gamma=0.99):
+    rewards = torch.FloatTensor(rewards)
     lenr = len(rewards)
-    discount_ret = torch.pow(gamma, torch.arange(lenr).float()) * rewards  # A Compute exponentially decaying rewards
-    discount_ret /= discount_ret.max()
-    return rewards
+    discount = torch.pow(gamma, torch.arange(lenr).float())
+    discount_ret = discount * torch.FloatTensor(rewards)  # A Compute exponentially decaying rewards
+    # discount_ret /= discount_ret.max()
+    return discount_ret.cumsum(-1).flip(0)
 
 
 def discount_rewards_array(gamma=0.99):
@@ -179,8 +181,8 @@ if __name__ == '__main__':
         # preds = torch.zeros(ep_len).to(device)
         # discounted_rewards = torch.zeros(ep_len)
 
-        # reward_batch = torch.Tensor([r for (s, a, r) in transitions]).flip(dims=(0,))
-        discounted_rewards = discount_rewards_array()
+        reward_batch = torch.Tensor([r for (s, a, r) in transitions]).flip(dims=(0,))
+        discounted_rewards = discount_rewards(reward_batch)
 
         state_batch = torch.cat([s for (s, a, r) in transitions])  # L Collect the states in the episode in a single tensor
         pred_batch = model(state_batch)

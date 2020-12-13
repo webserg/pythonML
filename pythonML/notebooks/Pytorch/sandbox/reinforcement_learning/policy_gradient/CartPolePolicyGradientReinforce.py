@@ -90,7 +90,7 @@ if __name__ == '__main__':
             action = np.random.choice(np.array([0, 1]), p=act_prob.data.numpy())  # E Select an action stochastically
             prev_state = curr_state
             curr_state, _, done, info = env.step(action)  # F Take the action in the environment
-            transitions.append((prev_state, action, t + 1))  # G Store this transition
+            transitions.append((prev_state, action, t   + 1))  # G Store this transition
             if done:  # H
                 break
 

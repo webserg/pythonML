@@ -10,7 +10,7 @@ if __name__ == '__main__':
     model = PolicyGradientNet(config)
     print(model)
     model.load()
-    env = gym.make("MountainCar-v0")
+    env = gym.make("MountainCar-v0").unwrapped
     n_actions = env.action_space.n
     actions_list = np.array([i for i in range(n_actions)])
     state = env.reset()
@@ -28,7 +28,7 @@ if __name__ == '__main__':
         state2, reward, done, info = env.step(action)  # I
         state1 = state2
         game_reward += reward
-        if j > 4000:
+        if j > 2000:
             done = True
         if done:
             game_counter += 1
