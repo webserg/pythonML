@@ -47,7 +47,7 @@ def run_episode(worker_env, worker_model):
     values, logprobs, rewards = [], [], []  # B
     done = False
     j = 0
-    while (done == False):  # C
+    while not done:  # C
         j += 1
         policy, value = worker_model(state)  # D
         values.append(value)
@@ -105,4 +105,4 @@ if __name__ == '__main__':
         p.terminate()
 
     print(counter.value, processes[1].exitcode)  # H
-    torch.save(MasterNode.state_dict(), '../models/actorCriticCartPoleRLModel.pt')
+    torch.save(MasterNode.state_dict(), '../../models/actorCriticCartPoleRLModel.pt')

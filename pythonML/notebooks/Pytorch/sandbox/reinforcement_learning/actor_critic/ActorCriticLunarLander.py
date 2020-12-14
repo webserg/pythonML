@@ -1,22 +1,10 @@
-# https://github.com/openai/gym/wiki/MountainCar-v0
+import torch
+from torch import nn
+from torch import optim
+import numpy as np
+from torch.nn import functional as F
 import gym
-
-env = gym.make('MountainCar-v0')
-state1 = env.reset()
-action = env.action_space.sample()
-state, reward, done, info = env.step(action)
-a = 0
-for _ in range(2000):
-    env.render()
-    act = env.action_space.sample()
-    print(act)
-    state, reward, done, info = env.step(act)
-    print("state = {0} reward = {1} done = {2} info = {3}".format(state, reward, done, info))
-
-env.close()
-
-
-
+import torch.multiprocessing as mp  # A
 
 
 # two net in one class
@@ -25,12 +13,11 @@ env.close()
 
 class NetConfig:
     file_path = '../../models/actorCriticLunarLanderRLModel.pt'
-    learning_rate = 0.001
+    learning_rate = 0.0001
     state_shape = 8
-    l2 = 16
-    l3 = 16
-    l4 = 16
     action_shape = 4
+    epochs = 2000
+    n_workers = 4
 
     def __init__(self):
         pass
@@ -56,16 +43,16 @@ class ActorCritic(nn.Module, ):  # B
         return actor, critic  # E
 
     def save(self):
-        torch.save(self.state_dict(), self.config.file_path)
+       torch.save(self.state_dict(), self.config.file_path)
 
     def load(self):
         self.load_state_dict(torch.load(self.config.file_path))
 
 
-def worker(t, worker_model, counter, params):
+def worker(t, worker_model: ActorCritic, counter, params):
     worker_env = gym.make("LunarLander-v2")
     state = worker_env.reset()
-    worker_opt = optim.Adam(lr=1e-4, params=worker_model.parameters())  # A
+    worker_opt = optim.Adam(lr=worker_model.config.learning_rate, params=worker_model.parameters())  # A
     worker_opt.zero_grad()
     for i in range(params['epochs']):
         worker_opt.zero_grad()
@@ -121,8 +108,8 @@ if __name__ == '__main__':
     MasterNode.share_memory()  # B will allow the parameters of models to be shared across processes rather than being copied
     processes = []  # C
     params = {
-        'epochs': 2000,
-        'n_workers': 4,
+        'epochs': config.epochs,
+        'n_workers': config.n_workers
     }
     counter = mp.Value('i', 0)  # D
     for i in range(params['n_workers']):
@@ -135,4 +122,4 @@ if __name__ == '__main__':
         p.terminate()
 
     print(counter.value, processes[1].exitcode)  # H
-    torch.save(MasterNode.state_dict(), '../../models/actorCriticLunarLanderRLModel.pt')
+    MasterNode.save()
