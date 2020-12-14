@@ -105,4 +105,4 @@ if __name__ == '__main__':
         p.terminate()
 
     print(counter.value, processes[1].exitcode)  # H
-    torch.save(MasterNode.state_dict(), '../models/actorCriticCartPoleRLModel.pt')
+    torch.save(MasterNode.state_dict(), '../../models/actorCriticCartPoleRLModel2.pt')
