@@ -1,45 +1,34 @@
 # https://github.com/openai/gym/wiki/MountainCar-v0
 import gym
-
-env = gym.make('MountainCar-v0')
-state1 = env.reset()
-action = env.action_space.sample()
-state, reward, done, info = env.step(action)
-a = 0
-for _ in range(2000):
-    env.render()
-    act = env.action_space.sample()
-    print(act)
-    state, reward, done, info = env.step(act)
-    print("state = {0} reward = {1} done = {2} info = {3}".format(state, reward, done, info))
-
-env.close()
-
-
-
-
+import torch
+from torch import nn
+from torch import optim
+import numpy as np
+from torch.nn import functional as F
+import gym
+import torch.multiprocessing as mp  # A
 
 # two net in one class
 # actor choose actions, critic compare predicted
 # value of state to received reward
 
 class NetConfig:
-    file_path = '../../models/actorCriticLunarLanderRLModel.pt'
-    learning_rate = 0.001
-    state_shape = 8
-    l2 = 16
-    l3 = 16
-    l4 = 16
-    action_shape = 4
+    file_path = '../../models/actorCriticMountainCarRLModel.pt'
+    learning_rate = 0.0001
+    state_shape = 2
+    action_shape = 3
+    epochs = 4000
+    n_workers = 4
+    env_name = "MountainCar-v0"
 
     def __init__(self):
         pass
 
 
 class ActorCritic(nn.Module, ):  # B
-    def __init__(self,  config: NetConfig):
+    def __init__(self, config: NetConfig):
         super(ActorCritic, self).__init__()
-        self.config= config
+        self.config = config
         self.l1 = nn.Linear(config.state_shape, 25)
         self.l2 = nn.Linear(25, 50)
         self.actor_lin1 = nn.Linear(50, config.action_shape)
@@ -62,10 +51,10 @@ class ActorCritic(nn.Module, ):  # B
         self.load_state_dict(torch.load(self.config.file_path))
 
 
-def worker(t, worker_model, counter, params):
-    worker_env = gym.make("LunarLander-v2")
+def worker(t, worker_model: ActorCritic, counter, params):
+    worker_env = gym.make(worker_model.config.env_name)
     state = worker_env.reset()
-    worker_opt = optim.Adam(lr=1e-4, params=worker_model.parameters())  # A
+    worker_opt = optim.Adam(lr=worker_model.config.learning_rate, params=worker_model.parameters())  # A
     worker_opt.zero_grad()
     for i in range(params['epochs']):
         worker_opt.zero_grad()
@@ -74,7 +63,7 @@ def worker(t, worker_model, counter, params):
         counter.value = counter.value + 1  # D
 
 
-def run_episode(worker_env,state, worker_model):
+def run_episode(worker_env, state, worker_model):
     state = torch.from_numpy(state).float()  # A
     values, logprobs, rewards = [], [], []  # B
     done = False
@@ -96,7 +85,7 @@ def run_episode(worker_env,state, worker_model):
     return values, logprobs, rewards
 
 
-def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.95):
+def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.99):
     rewards = torch.Tensor(rewards).flip(dims=(0,)).view(-1)  # A
     logprobs = torch.stack(logprobs).flip(dims=(0,)).view(-1)
     values = torch.stack(values).flip(dims=(0,)).view(-1)
@@ -121,8 +110,8 @@ if __name__ == '__main__':
     MasterNode.share_memory()  # B will allow the parameters of models to be shared across processes rather than being copied
     processes = []  # C
     params = {
-        'epochs': 2000,
-        'n_workers': 4,
+        'epochs': config.epochs,
+        'n_workers': config.n_workers
     }
     counter = mp.Value('i', 0)  # D
     for i in range(params['n_workers']):
@@ -135,4 +124,4 @@ if __name__ == '__main__':
         p.terminate()
 
     print(counter.value, processes[1].exitcode)  # H
-    torch.save(MasterNode.state_dict(), '../../models/actorCriticLunarLanderRLModel.pt')
+    MasterNode.save()

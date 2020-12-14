@@ -83,7 +83,7 @@ def run_episode(worker_env,state, worker_model):
     return values, logprobs, rewards
 
 
-def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.95):
+def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.99):
     rewards = torch.Tensor(rewards).flip(dims=(0,)).view(-1)  # A
     logprobs = torch.stack(logprobs).flip(dims=(0,)).view(-1)
     values = torch.stack(values).flip(dims=(0,)).view(-1)
