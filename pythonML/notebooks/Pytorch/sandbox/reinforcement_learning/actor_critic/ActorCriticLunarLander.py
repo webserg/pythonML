@@ -11,12 +11,25 @@ import torch.multiprocessing as mp  # A
 # actor choose actions, critic compare predicted
 # value of state to received reward
 
-class ActorCritic(nn.Module):  # B
+class NetConfig:
+    file_path = '../../models/actorCriticLunarLanderRLModel.pt'
+    learning_rate = 0.0001
+    state_shape = 8
+    action_shape = 4
+    epochs = 2000
+    n_workers = 4
+
     def __init__(self):
+        pass
+
+
+class ActorCritic(nn.Module, ):  # B
+    def __init__(self,  config: NetConfig):
         super(ActorCritic, self).__init__()
-        self.l1 = nn.Linear(4, 25)
+        self.config= config
+        self.l1 = nn.Linear(config.state_shape, 25)
         self.l2 = nn.Linear(25, 50)
-        self.actor_lin1 = nn.Linear(50, 2)
+        self.actor_lin1 = nn.Linear(50, config.action_shape)
         self.l3 = nn.Linear(50, 25)
         self.critic_lin1 = nn.Linear(25, 1)
 
@@ -29,21 +42,27 @@ class ActorCritic(nn.Module):  # B
         critic = torch.tanh(self.critic_lin1(c))  # D
         return actor, critic  # E
 
+    def save(self):
+       torch.save(self.state_dict(), self.config.file_path)
 
-def worker(t, worker_model, counter, params):
-    worker_env = gym.make("CartPole-v1")
-    worker_env.reset()
-    worker_opt = optim.Adam(lr=1e-4, params=worker_model.parameters())  # A
+    def load(self):
+        self.load_state_dict(torch.load(self.config.file_path))
+
+
+def worker(t, worker_model: ActorCritic, counter, params):
+    worker_env = gym.make("LunarLander-v2")
+    state = worker_env.reset()
+    worker_opt = optim.Adam(lr=worker_model.config.learning_rate, params=worker_model.parameters())  # A
     worker_opt.zero_grad()
     for i in range(params['epochs']):
         worker_opt.zero_grad()
-        values, logprobs, rewards = run_episode(worker_env, worker_model)  # B
+        values, logprobs, rewards = run_episode(worker_env, state, worker_model)  # B
         actor_loss, critic_loss, eplen = update_params(worker_opt, values, logprobs, rewards)  # C
         counter.value = counter.value + 1  # D
 
 
-def run_episode(worker_env, worker_model):
-    state = torch.from_numpy(worker_env.env.state).float()  # A
+def run_episode(worker_env,state, worker_model):
+    state = torch.from_numpy(state).float()  # A
     values, logprobs, rewards = [], [], []  # B
     done = False
     j = 0
@@ -56,18 +75,15 @@ def run_episode(worker_env, worker_model):
         action = action_dist.sample()  # E
         logprob_ = policy.view(-1)[action]
         logprobs.append(logprob_)
-        state_, _, done, info = worker_env.step(action.detach().numpy())
+        state_, reward, done, info = worker_env.step(action.detach().numpy())
         state = torch.from_numpy(state_).float()
         if done:  # F
-            reward = -10
             worker_env.reset()
-        else:
-            reward = 1.0
         rewards.append(reward)
     return values, logprobs, rewards
 
 
-def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.95):
+def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.99):
     rewards = torch.Tensor(rewards).flip(dims=(0,)).view(-1)  # A
     logprobs = torch.stack(logprobs).flip(dims=(0,)).view(-1)
     values = torch.stack(values).flip(dims=(0,)).view(-1)
@@ -87,12 +103,13 @@ def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.95):
 
 
 if __name__ == '__main__':
-    MasterNode = ActorCritic()  # A
+    config = NetConfig()
+    MasterNode = ActorCritic(config)  # A
     MasterNode.share_memory()  # B will allow the parameters of models to be shared across processes rather than being copied
     processes = []  # C
     params = {
-        'epochs': 1000,
-        'n_workers': 4,
+        'epochs': config.epochs,
+        'n_workers': config.n_workers
     }
     counter = mp.Value('i', 0)  # D
     for i in range(params['n_workers']):
@@ -105,4 +122,4 @@ if __name__ == '__main__':
         p.terminate()
 
     print(counter.value, processes[1].exitcode)  # H
-    torch.save(MasterNode.state_dict(), '../../models/actorCriticCartPoleRLModel.pt')
+    MasterNode.save()
