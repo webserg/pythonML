@@ -12,6 +12,7 @@ import torch.multiprocessing as mp  # A
 # actor choose actions, critic compare predicted
 # value of state to received reward
 
+
 class NetConfig:
     file_path = '../../models/actorCriticMountainCarRLModel.pt'
     learning_rate = 0.0001
@@ -89,15 +90,15 @@ def update_params(worker_opt, values, logprobs, rewards, clc=0.1, gamma=0.99):
     rewards = torch.Tensor(rewards).flip(dims=(0,)).view(-1)  # A
     logprobs = torch.stack(logprobs).flip(dims=(0,)).view(-1)
     values = torch.stack(values).flip(dims=(0,)).view(-1)
-    Returns = []
+    returns = []
     ret_ = torch.Tensor([0])
     for r in range(rewards.shape[0]):  # B
         ret_ = rewards[r] + gamma * ret_
-        Returns.append(ret_)
-    Returns = torch.stack(Returns).view(-1)
-    Returns = F.normalize(Returns, dim=0)
-    actor_loss = -1 * logprobs * (Returns - values.detach())  # C
-    critic_loss = torch.pow(values - Returns, 2)  # D
+        returns.append(ret_)
+    returns = torch.stack(returns).view(-1)
+    returns = F.normalize(returns, dim=0)
+    actor_loss = -1 * logprobs * (returns - values.detach())  # C
+    critic_loss = torch.pow(values - returns, 2)  # D
     loss = actor_loss.sum() + clc * critic_loss.sum()  # E
     loss.backward()
     worker_opt.step()
