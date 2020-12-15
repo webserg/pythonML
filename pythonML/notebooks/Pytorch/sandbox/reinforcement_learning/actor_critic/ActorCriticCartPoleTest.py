@@ -1,12 +1,12 @@
 import torch
 import numpy as np
 import gym
-from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.ActorCriticCartPole import ActorCritic
+from pythonML.notebooks.Pytorch.sandbox.reinforcement_learning.actor_critic.ActorCriticCartPole import ActorCritic
 
 if __name__ == '__main__':
     actorCriticModel = ActorCritic()  # A
     print(actorCriticModel)
-    actorCriticModel.load_state_dict(torch.load('../models/actorCriticCartPoleRLModel.pt'))
+    actorCriticModel.load_state_dict(torch.load('../../models/actorCriticCartPoleRLModel.pt'))
     env = gym.make("CartPole-v1")
     env.reset()
     j=0
