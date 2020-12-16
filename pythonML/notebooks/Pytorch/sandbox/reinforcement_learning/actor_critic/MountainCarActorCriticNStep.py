@@ -88,6 +88,7 @@ def run_episode(worker_env, state, worker_model, n_steps=400):
             reward = 1000
         else:
             reward += pos
+            # modified_reward = reward + 300 * (gamma * abs(new_state[1]) - abs(state[1]))
             G = value.detach()
         rewards.append(reward)
     return values, logprobs, rewards, G
