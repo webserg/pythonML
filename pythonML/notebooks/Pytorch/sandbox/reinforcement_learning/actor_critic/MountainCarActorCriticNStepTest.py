@@ -10,7 +10,8 @@ if __name__ == '__main__':
     model = ActorCritic(config)
     print(model)
     model.load()
-    env = gym.make(config.env_name).unwrapped
+    # env = gym.make(config.env_name).unwrapped
+    env = gym.make(config.env_name)
     state = env.reset()
     game_reward = 0
     total_reward = 0

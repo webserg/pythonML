@@ -15,11 +15,11 @@ import torch.multiprocessing as mp  # A
 
 
 class NetConfig:
-    file_path = '../../models/actorCriticMountainCarNStepRLModel.pt'
+    file_path = '../../models/actorCriticMountainCarNStepRLModel200.pt'
     learning_rate = 0.001
     state_shape = 2
     action_shape = 3
-    epochs = 500
+    epochs = 1000
     n_workers = 4
     env_name = "MountainCar-v0"
 
@@ -55,6 +55,7 @@ class ActorCritic(nn.Module, ):  # B
 
 def worker(t, worker_model: ActorCritic, counter, params):
     worker_env = gym.make(worker_model.config.env_name).unwrapped
+    # worker_env = gym.make(worker_model.config.env_name)
     state = worker_env.reset()
     worker_opt = optim.Adam(lr=worker_model.config.learning_rate, params=worker_model.parameters())  # A
     worker_opt.zero_grad()
@@ -66,31 +67,32 @@ def worker(t, worker_model: ActorCritic, counter, params):
 
 
 def run_episode(worker_env, state, worker_model, n_steps=400):
-    state = torch.from_numpy(state).float()  # A
     values, logprobs, rewards = [], [], []  # B
     done = False
     j = 0
     G = torch.Tensor()
     while j < n_steps and done is False:  # C
         j += 1
-        policy, value = worker_model(state)  # D
+        policy, value = worker_model(torch.from_numpy(state).float())  # D
         values.append(value)
         logits = policy.view(-1)
         action_dist = torch.distributions.Categorical(logits=logits)
         action = action_dist.sample()  # E
         logprob_ = policy.view(-1)[action]
         logprobs.append(logprob_)
-        state_, reward, done, info = worker_env.step(action.detach().numpy())
-        pos, vel = state_
-        state = torch.from_numpy(state_).float()
+        new_state, reward, done, info = worker_env.step(action.detach().numpy())
+        pos, vel = new_state
         if done:  # F
             worker_env.reset()
             reward = 1000
         else:
-            reward += pos
-            # modified_reward = reward + 300 * (gamma * abs(new_state[1]) - abs(state[1]))
+            # reward += pos
+            #https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/NgHaradaRussell-shaping-ICML1999.pdf
+            # monotonic change of reward function
+            reward = reward + 300 * (0.99 * abs(new_state[1]) - abs(state[1]))
             G = value.detach()
         rewards.append(reward)
+        state = new_state
     return values, logprobs, rewards, G
 
 
