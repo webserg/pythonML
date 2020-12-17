@@ -28,6 +28,7 @@ a = 0
 for _ in range(2000):
     env.render()
     act = env.action_space.sample()
+    print(act)
     state, reward, done, info = env.step(act)
     if done:
         env.reset()

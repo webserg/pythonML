@@ -13,10 +13,10 @@ import torch.multiprocessing as mp  # A
 
 class NetConfig:
     file_path = '../../models/actorCriticLunarLanderNstepRLModel.pt'
-    learning_rate = 0.0001
+    learning_rate = 0.001
     state_shape = 8
     action_shape = 4
-    epochs = 2000
+    epochs = 1000
     n_workers = 4
 
     def __init__(self):
@@ -61,7 +61,7 @@ def worker(t, worker_model: ActorCritic, counter, params):
         counter.value = counter.value + 1  # D
 
 
-def run_episode(worker_env,state, worker_model, n_steps=200):
+def run_episode(worker_env,state, worker_model, n_steps=50):
     state = torch.from_numpy(state).float()  # A
     values, logprobs, rewards = [], [], []  # B
     done = False
