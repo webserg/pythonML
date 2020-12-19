@@ -18,7 +18,7 @@ import torch.multiprocessing as mp
 class NetConfig:
     file_path = '../../models/PongACConvModel.pt'
     learning_rate = 0.001
-    epochs = 50
+    epochs = 1000
     n_workers = 4
     env_name = "Pong-v0"
 

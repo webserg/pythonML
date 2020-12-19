@@ -17,6 +17,8 @@ if __name__ == '__main__':
     config.state_shape = init_screen.shape
     config.screen_height = screen_height
     config.screen_width = screen_width
+    n_actions = env.action_space.n
+    config.n_actions = n_actions
     model = ActorCritic(config)
     print(model)
     model.load()
@@ -35,7 +37,7 @@ if __name__ == '__main__':
         logits, value = model(curr_state)
         action_dist = torch.distributions.Categorical(logits=logits)
         action = action_dist.sample()
-        print(action)
+        # print(action)
         cur_screen, reward, done, info = env.step(action.detach().numpy())
         game_reward += reward
         if done:
