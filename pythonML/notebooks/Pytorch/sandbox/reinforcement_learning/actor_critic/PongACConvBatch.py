@@ -18,8 +18,6 @@ import torch.multiprocessing as mp
 class NetConfig:
     file_path = '../../models/PongACConvModel.pt'
     learning_rate = 0.001
-    state_shape = 2
-    action_shape = 3
     epochs = 50
     n_workers = 4
     env_name = "Pong-v0"
@@ -44,7 +42,7 @@ class ActorCritic(nn.Module):
         convw = self.conv2d_size_out(self.conv2d_size_out(self.conv2d_size_out(config.screen_width)))
         convh = self.conv2d_size_out(self.conv2d_size_out(self.conv2d_size_out(config.screen_height)))
         linear_input_size = convw * convh * conv
-        self.actor_lin1 = nn.Linear(linear_input_size, config.action_shape)
+        self.actor_lin1 = nn.Linear(linear_input_size, config.n_actions)
         self.l3 = nn.Linear(linear_input_size, 25)
         self.critic_lin1 = nn.Linear(25, 1)
 
