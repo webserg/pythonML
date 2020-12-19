@@ -18,7 +18,7 @@ import torch.multiprocessing as mp
 class NetConfig:
     file_path = '../../models/PongACConvModel.pt'
     learning_rate = 0.001
-    epochs = 1000
+    epochs = 2000
     n_workers = 4
     env_name = "Pong-v0"
 
@@ -132,12 +132,12 @@ def worker(t, worker_model: ActorCritic, counter, params):
         values, logprobs, rewards, G = run_episode(worker_env, state, worker_model)
         actor_loss, critic_loss, eplen = update_params(worker_opt, values, logprobs, rewards, G)
         counter.value = counter.value + 1  # D
-        if t == 0 and counter.value % 10 == 0:
+        if t == 0 and counter.value % 100 == 0:
             worker_model.save()
             print("model saved epoch = {0}".format(counter.value))
 
 
-def run_episode(worker_env, state, worker_model, n_steps=500):
+def run_episode(worker_env, state, worker_model, n_steps=700):
     cur_screen = state
     values, logprobs, rewards = [], [], []
     done = False
