@@ -17,8 +17,8 @@ import torch.multiprocessing as mp
 
 class NetConfig:
     file_path = '../../models/PongACConvModel.pt'
-    learning_rate = 0.001
-    epochs = 2000
+    learning_rate = 0.0007
+    epochs = 3000
     n_workers = 4
     env_name = "Pong-v0"
 
@@ -31,7 +31,7 @@ class ActorCritic(nn.Module):
     def __init__(self, config: NetConfig):
         super(ActorCritic, self).__init__()
         self.config = config
-        conv = 8
+        conv = 16
         self.conv1 = nn.Conv2d(1, conv, kernel_size=5, stride=2)
         self.bn1 = nn.BatchNorm2d(conv)
         self.conv2 = nn.Conv2d(conv, conv, kernel_size=5, stride=2)
@@ -47,7 +47,8 @@ class ActorCritic(nn.Module):
         self.critic_lin1 = nn.Linear(25, 1)
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
-        self.losses = []
+        self.actor_losses = []
+        self.critic_losses = []
 
     def forward(self, x):
         x = F.relu(self.bn1(self.conv1(x)))
@@ -72,9 +73,16 @@ class ActorCritic(nn.Module):
     def conv2d_size_out(self, size, kernel_size=5, stride=2):
         return (size - (kernel_size - 1) - 1) // stride + 1
 
-    def plot(self):
+    def plot_actor_loss(self):
         plt.figure(figsize=(10, 7))
         plt.plot(self.losses)
+        plt.xlabel("Epochs", fontsize=22)
+        plt.ylabel("Loss", fontsize=22)
+        plt.show()
+
+    def plot_crticic_loss(self):
+        plt.figure(figsize=(10, 7))
+        plt.plot(self.critic_loss)
         plt.xlabel("Epochs", fontsize=22)
         plt.ylabel("Loss", fontsize=22)
         plt.show()
@@ -96,32 +104,6 @@ def opt_screen(I):
     return torch.from_numpy(I.astype(np.float)).unsqueeze(0).unsqueeze(0).float()
 
 
-# def opt_screen(screen):
-#     # Cart is in the lower half, so strip off the top and bottom of the screen
-#     screen_height, screen_width, chanel = screen.shape
-#     screen = screen.transpose((2, 0, 1))
-#     screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
-#     screen = torch.from_numpy(screen)
-#     # Resize, and add a batch dimension (BCHW)
-#     return resize(screen).unsqueeze(0)
-
-# def opt_screen(I):
-#     """ prepro 210x160x3 uint8 frame into 6400 (80x80) 1D float vector """
-#     I = I[35:195]  # crop
-#     I = I[::2, ::2, 0]  # downsample by factor of 2
-#     I[I == 144] = 0  # erase background (background type 1)
-#     I[I == 109] = 0  # erase background (background type 2)
-#     I[I != 0] = 1  # everything else (paddles, ball) just set to 1
-#     return torch.tensor(I.astype(np.float).ravel())
-
-
-
-resize = T.Compose([T.ToPILImage(),
-                    T.Grayscale(num_output_channels=1),
-                    # T.Resize(40, interpolation=Image.CUBIC),
-                    T.ToTensor()])
-
-
 def worker(t, worker_model: ActorCritic, counter, params):
     worker_env = gym.make(worker_model.config.env_name)
     state = worker_env.reset()
@@ -131,13 +113,16 @@ def worker(t, worker_model: ActorCritic, counter, params):
         worker_opt.zero_grad()
         values, logprobs, rewards, G = run_episode(worker_env, state, worker_model)
         actor_loss, critic_loss, eplen = update_params(worker_opt, values, logprobs, rewards, G)
-        counter.value = counter.value + 1  # D
-        if t == 0 and counter.value % 100 == 0:
+        worker_model.actor_losses.append(actor_loss.detach())
+        worker_model.critic_losses.append(critic_loss.detach())
+        counter.value = counter.value + 1
+
+        if t == 0 and i % 100 == 0:
             worker_model.save()
             print("model saved epoch = {0}".format(counter.value))
 
 
-def run_episode(worker_env, state, worker_model, n_steps=700):
+def run_episode(worker_env, state, worker_model, n_steps=1000):
     cur_screen = state
     values, logprobs, rewards = [], [], []
     done = False
@@ -157,7 +142,7 @@ def run_episode(worker_env, state, worker_model, n_steps=700):
         logprobs.append(logprob_)
         prev_state = curr_state
         cur_screen, reward, done, info = worker_env.step(action.detach().numpy())
-        if done:  # F
+        if done:
             worker_env.reset()
         else:
             G = value.detach()
@@ -165,7 +150,7 @@ def run_episode(worker_env, state, worker_model, n_steps=700):
     return values, logprobs, rewards, G
 
 
-def update_params(worker_opt, values, logprobs, rewards, G, clc=0.1, gamma=0.95):
+def update_params(worker_opt, values, logprobs, rewards, G, clc=0.1, gamma=0.99):
     rewards = torch.Tensor(rewards).flip(dims=(0,)).view(-1)  # A
     logprobs = torch.stack(logprobs).flip(dims=(0,)).view(-1)
     values = torch.stack(values).flip(dims=(0,)).view(-1)
@@ -218,4 +203,5 @@ if __name__ == '__main__':
 
     print(counter.value, processes[1].exitcode)  # H
     MasterNode.save()
-
+    MasterNode.plot_actor_loss()
+    MasterNode.plot_crticic_loss()
