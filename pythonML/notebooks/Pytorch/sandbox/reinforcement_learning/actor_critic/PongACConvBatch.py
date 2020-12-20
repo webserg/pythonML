@@ -43,8 +43,8 @@ class ActorCritic(nn.Module):
         convh = self.conv2d_size_out(self.conv2d_size_out(self.conv2d_size_out(config.screen_height)))
         linear_input_size = convw * convh * conv
         self.actor_lin1 = nn.Linear(linear_input_size, config.n_actions)
-        self.l3 = nn.Linear(linear_input_size, 25)
-        self.critic_lin1 = nn.Linear(25, 1)
+        self.l3 = nn.Linear(linear_input_size, 50)
+        self.critic_lin1 = nn.Linear(50, 1)
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
         self.actor_losses = []
@@ -75,7 +75,7 @@ class ActorCritic(nn.Module):
 
     def plot_actor_loss(self):
         plt.figure(figsize=(10, 7))
-        plt.plot(self.losses)
+        plt.plot(self.actor_losses)
         plt.xlabel("Epochs", fontsize=22)
         plt.ylabel("Loss", fontsize=22)
         plt.show()
@@ -113,13 +113,13 @@ def worker(t, worker_model: ActorCritic, counter, params):
         worker_opt.zero_grad()
         values, logprobs, rewards, G = run_episode(worker_env, state, worker_model)
         actor_loss, critic_loss, eplen = update_params(worker_opt, values, logprobs, rewards, G)
-        worker_model.actor_losses.append(actor_loss.detach())
-        worker_model.critic_losses.append(critic_loss.detach())
+        worker_model.actor_losses.append(actor_loss.detach().numpy())
+        worker_model.critic_losses.append(critic_loss.detach().numpy())
         counter.value = counter.value + 1
 
         if t == 0 and i % 100 == 0:
             worker_model.save()
-            print("model saved epoch = {0}".format(counter.value))
+            print("model saved epoch = {0}".format(i))
 
 
 def run_episode(worker_env, state, worker_model, n_steps=1000):
