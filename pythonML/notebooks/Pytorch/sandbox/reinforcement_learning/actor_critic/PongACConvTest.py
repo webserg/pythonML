@@ -6,6 +6,15 @@ from PongACConvBatch import ActorCritic
 from PongACConvBatch import NetConfig
 from PongACConvBatch import opt_screen
 
+
+def test_image_plot(screen):
+    plt.figure()
+    plt.imshow(screen,
+               interpolation='none')
+    plt.title('Example extracted screen')
+    plt.show()
+
+
 if __name__ == '__main__':
     config = NetConfig()
     # env = gym.make(config.env_name).unwrapped
@@ -23,14 +32,16 @@ if __name__ == '__main__':
     print(model)
     model.load()
     cur_screen = env.reset()
+    test_image_plot(cur_screen)
     game_reward = 0
     total_reward = 0
-    total_games = 20
+    total_games = 1
     game_counter = 0
     j = 0
     n_actions = env.action_space.n
     actions_list = np.array([i for i in range(n_actions)])
     prev_state = torch.zeros(config.state_shape).float()
+    print(env.get_keys_to_action())
     while game_counter < total_games:
         env.render()
         j += 1
@@ -40,11 +51,15 @@ if __name__ == '__main__':
         action = action_dist.sample()
         # print(action)
         cur_screen, reward, done, info = env.step(action.detach().numpy())
+        # if reward != 0:
+        print("step = {0} reward {1}".format(j, reward))
+        test_image_plot(cur_screen)
         game_reward += reward
         if done:
             game_counter += 1
             print("Lost step = {0} reward {1}".format(j, game_reward))
             cur_screen = env.reset()
+            test_image_plot(cur_screen)
             j = 0
             total_reward += game_reward
             game_reward = 0

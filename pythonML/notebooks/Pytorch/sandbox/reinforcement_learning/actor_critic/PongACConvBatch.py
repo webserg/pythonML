@@ -122,7 +122,7 @@ def worker(t, worker_model: ActorCritic, counter, params):
             print("model saved epoch = {0}".format(i))
 
 
-def run_episode(worker_env, state, worker_model, n_steps=100):
+def run_episode(worker_env, state, worker_model, n_steps=300):
     cur_screen = state
     values, logprobs, rewards = [], [], []
     done = False
@@ -181,9 +181,8 @@ if __name__ == '__main__':
     config.screen_height = screen_height
     config.screen_width = screen_width
     del init_screen
-    n_actions = env.action_space.n
-    config.n_actions = n_actions
-    actions_list = np.array([i for i in range(n_actions)])
+    config.n_actions = 2
+    actions_list = np.array([2,3])
     MasterNode = ActorCritic(config)
     MasterNode.share_memory()  # will allow parameters of models to be shared across processes rather than being copied
     processes = []
