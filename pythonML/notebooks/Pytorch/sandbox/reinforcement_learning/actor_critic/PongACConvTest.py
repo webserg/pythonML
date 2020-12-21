@@ -9,7 +9,7 @@ from PongACConvBatch import opt_screen
 if __name__ == '__main__':
     config = NetConfig()
     # env = gym.make(config.env_name).unwrapped
-    env = gym.make(config.env_name).unwrapped
+    env = gym.make(config.env_name)
     init_screen = opt_screen(env.reset())
     # test_image_plot(env)
     # init_screen = get_screen(env)
@@ -32,6 +32,7 @@ if __name__ == '__main__':
     actions_list = np.array([i for i in range(n_actions)])
     prev_state = torch.zeros(config.state_shape).float()
     while game_counter < total_games:
+        env.render()
         j += 1
         curr_state = opt_screen(cur_screen) - prev_state
         logits, value = model(curr_state)
@@ -47,6 +48,6 @@ if __name__ == '__main__':
             j = 0
             total_reward += game_reward
             game_reward = 0
-        env.render()
+
     print(" avg reward {0}".format(total_reward / game_counter))
     env.close()

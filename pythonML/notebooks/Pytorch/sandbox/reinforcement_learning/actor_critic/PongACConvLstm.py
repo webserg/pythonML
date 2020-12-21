@@ -16,9 +16,9 @@ import torch.multiprocessing as mp
 
 
 class NetConfig:
-    file_path = '../../models/PongACConvModel.pt'
-    learning_rate = 0.0007
-    epochs = 3000
+    file_path = '../../models/PongACConvModel2.pt'
+    learning_rate = 0.001
+    epochs = 1
     n_workers = 4
     env_name = "Pong-v0"
 
@@ -31,36 +31,39 @@ class ActorCritic(nn.Module):
     def __init__(self, config: NetConfig):
         super(ActorCritic, self).__init__()
         self.config = config
-        conv = 16
-        self.conv1 = nn.Conv2d(1, conv, kernel_size=5, stride=2)
-        self.bn1 = nn.BatchNorm2d(conv)
-        self.conv2 = nn.Conv2d(conv, conv, kernel_size=5, stride=2)
-        self.bn2 = nn.BatchNorm2d(conv)
-        self.conv3 = nn.Conv2d(conv, conv, kernel_size=5, stride=2)
-        self.bn3 = nn.BatchNorm2d(conv)
+        conv = 32
+        self.conv1 = nn.Conv2d(3, conv, kernel_size=3, stride=2, padding=1)
+        self.maxpool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(conv, conv, kernel_size=3, stride=2, padding=1)
+        self.conv3 = nn.Conv2d(conv, conv, kernel_size=3, stride=2, padding=1)
+        self.lstm = nn.LSTMCell(32 * 3 * 3, 256)
 
-        convw = self.conv2d_size_out(self.conv2d_size_out(self.conv2d_size_out(config.screen_width)))
-        convh = self.conv2d_size_out(self.conv2d_size_out(self.conv2d_size_out(config.screen_height)))
-        linear_input_size = convw * convh * conv
+        convw = self.conv_pool_size(self.conv_pool_size(self.conv_pool_size(config.screen_width)))
+        convh = self.conv_pool_size(self.conv_pool_size(self.conv_pool_size(config.screen_height)))
+
+        linear_input_size = 256
         self.actor_lin1 = nn.Linear(linear_input_size, config.n_actions)
-        self.l3 = nn.Linear(linear_input_size, 50)
-        self.critic_lin1 = nn.Linear(50, 1)
+        self.l3 = nn.Linear(linear_input_size, 100)
+        self.critic_lin1 = nn.Linear(100, 1)
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
         self.actor_losses = []
         self.critic_losses = []
 
-    def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
+    def forward(self, inputs):
+        x, (hx, cx) = inputs
+        x = F.relu(self.maxpool(self.conv1(x)))
+        x = F.relu(self.maxpool(self.conv2(x)))
+        x = F.relu(self.maxpool(self.conv3(x)))
         x = x.view(x.size(0), -1)
+        hx, cx = self.lstm(x, (hx, cx))
+        x = hx
         actor = F.log_softmax(self.actor_lin1(x), dim=0)
 
         c = F.relu(self.l3(x.detach()))
         critic = torch.tanh(self.critic_lin1(c))
 
-        return actor, critic
+        return actor, critic, (hx, cx)
 
     def save(self):
         torch.save(self.state_dict(), self.config.file_path)
@@ -70,7 +73,12 @@ class ActorCritic(nn.Module):
 
     # Number of Linear input connections depends on output of conv2d layers
     # and therefore the input image size, so compute it.
-    def conv2d_size_out(self, size, kernel_size=5, stride=2):
+    @staticmethod
+    def conv_pool_size(size, kernel_size=5, stride=2):
+        return ActorCritic.maxpool_size((size - (kernel_size - 1) - 1) // stride + 1)
+
+    @staticmethod
+    def maxpool_size(size, kernel_size=5, stride=2):
         return (size - (kernel_size - 1) - 1) // stride + 1
 
     def plot_actor_loss(self):
@@ -128,19 +136,18 @@ def run_episode(worker_env, state, worker_model, n_steps=1000):
     done = False
     j = 0
     G = torch.Tensor()
-    prev_state = torch.zeros(worker_model.config.state_shape).float()
+    cx = torch.zeros(1, 256)
+    hx = torch.zeros(1, 256)
+
     while j < n_steps and done is False:  # C
         j += 1
-        curr_state = opt_screen(cur_screen) - prev_state
-        # curr_state = curr_state.float()
-        policy, value = worker_model(curr_state)  # D
+        policy, value, (hx, cx) = worker_model(cur_screen, (hx, cx))  # D
         values.append(value)
         logits = policy.view(-1)
         action_dist = torch.distributions.Categorical(logits=logits)
         action = action_dist.sample()  # E
         logprob_ = policy.view(-1)[action]
         logprobs.append(logprob_)
-        prev_state = curr_state
         cur_screen, reward, done, info = worker_env.step(action.detach().numpy())
         if done:
             worker_env.reset()
@@ -150,7 +157,7 @@ def run_episode(worker_env, state, worker_model, n_steps=1000):
     return values, logprobs, rewards, G
 
 
-def update_params(worker_opt, values, logprobs, rewards, G, clc=0.1, gamma=0.99):
+def update_params(worker_opt, values, logprobs, rewards, G, clc=0.1, gamma=0.95):
     rewards = torch.Tensor(rewards).flip(dims=(0,)).view(-1)  # A
     logprobs = torch.stack(logprobs).flip(dims=(0,)).view(-1)
     values = torch.stack(values).flip(dims=(0,)).view(-1)
