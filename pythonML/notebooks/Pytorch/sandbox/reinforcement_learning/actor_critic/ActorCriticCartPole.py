@@ -24,7 +24,8 @@ class ActorCritic(nn.Module):  # B
         x = F.normalize(x, dim=0)
         y = F.relu(self.l1(x))
         y = F.relu(self.l2(y))
-        actor = F.log_softmax(self.actor_lin1(y), dim=0)  # C
+        probs_numb = self.actor_lin1(y)
+        actor = F.log_softmax(probs_numb, dim=0)  # C
         c = F.relu(self.l3(y.detach()))
         critic = torch.tanh(self.critic_lin1(c))  # D
         return actor, critic  # E
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     processes = []  # C
     params = {
         'epochs': 1000,
-        'n_workers': 4,
+        'n_workers': 1,
     }
     counter = mp.Value('i', 0)  # D
     for i in range(params['n_workers']):
@@ -105,4 +106,4 @@ if __name__ == '__main__':
         p.terminate()
 
     print(counter.value, processes[1].exitcode)  # H
-    torch.save(MasterNode.state_dict(), '../../models/actorCriticCartPoleRLModel.pt')
+    # torch.save(MasterNode.state_dict(), '../../models/actorCriticCartPoleRLModel.pt')

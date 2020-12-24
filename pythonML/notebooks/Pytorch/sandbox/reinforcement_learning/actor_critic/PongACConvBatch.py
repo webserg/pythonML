@@ -55,7 +55,8 @@ class ActorCritic(nn.Module):
         x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.bn3(self.conv3(x)))
         x = x.view(x.size(0), -1)
-        actor = F.log_softmax(self.actor_lin1(x), dim=0)
+        probs = self.actor_lin1(x)
+        actor = F.log_softmax(probs.squeeze(), dim=0)
 
         c = F.relu(self.l3(x.detach()))
         critic = torch.tanh(self.critic_lin1(c))
@@ -141,13 +142,20 @@ def run_episode(worker_env, state, worker_model, n_steps=300):
         logprob_ = policy.view(-1)[action]
         logprobs.append(logprob_)
         prev_state = curr_state
-        cur_screen, reward, done, info = worker_env.step(action.detach().numpy())
+        cur_screen, reward, done, info = worker_env.step(map_action_to_enviroment(action.detach().numpy()))
         if done:
             worker_env.reset()
         else:
             G = value.detach()
         rewards.append(reward)
     return values, logprobs, rewards, G
+
+
+def map_action_to_enviroment(action):
+    if action == 0:
+        return 2
+    else:
+        return 3
 
 
 def update_params(worker_opt, values, logprobs, rewards, G, clc=0.1, gamma=0.95):
@@ -182,7 +190,6 @@ if __name__ == '__main__':
     config.screen_width = screen_width
     del init_screen
     config.n_actions = 2
-    actions_list = np.array([2,3])
     MasterNode = ActorCritic(config)
     MasterNode.share_memory()  # will allow parameters of models to be shared across processes rather than being copied
     processes = []
