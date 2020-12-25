@@ -16,7 +16,8 @@ if __name__ == '__main__':
     #4 up
     #5 down
     # env = gym.make(config.env_name).unwrapped
-    env = gym.make("Pong-v0").unwrapped
+    env = gym.make("PongNoFrameskip-v4").unwrapped
+    print(env.action_space.n)
     print(env.get_action_meanings())
     action = 5  # modify this!
     screen = env.reset()

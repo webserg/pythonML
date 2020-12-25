@@ -17,8 +17,8 @@ import torch.multiprocessing as mp
 
 class NetConfig:
     file_path = '../../models/PongACConvModel.pt'
-    learning_rate = 0.001
-    epochs = 4000
+    learning_rate = 0.0007
+    epochs = 2000
     n_workers = 4
     env_name = "Pong-v0"
 
@@ -31,8 +31,8 @@ class ActorCritic(nn.Module):
     def __init__(self, config: NetConfig):
         super(ActorCritic, self).__init__()
         self.config = config
-        conv = 16
-        self.conv1 = nn.Conv2d(1, conv, kernel_size=5, stride=2)
+        conv = 32
+        self.conv1 = nn.Conv2d(3, conv, kernel_size=5, stride=2)
         self.bn1 = nn.BatchNorm2d(conv)
         self.conv2 = nn.Conv2d(conv, conv, kernel_size=5, stride=2)
         self.bn2 = nn.BatchNorm2d(conv)
@@ -43,8 +43,8 @@ class ActorCritic(nn.Module):
         convh = self.conv2d_size_out(self.conv2d_size_out(self.conv2d_size_out(config.screen_height)))
         linear_input_size = convw * convh * conv
         self.actor_lin1 = nn.Linear(linear_input_size, config.n_actions)
-        self.l3 = nn.Linear(linear_input_size, 50)
-        self.critic_lin1 = nn.Linear(50, 1)
+        self.l3 = nn.Linear(linear_input_size, 100)
+        self.critic_lin1 = nn.Linear(100, 1)
 
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.config.learning_rate)
         self.actor_losses = []
@@ -89,10 +89,16 @@ class ActorCritic(nn.Module):
         plt.show()
 
 
+def get_state(obs):
+    state = obs.transpose((2, 0, 1))
+    state = torch.from_numpy(state).float()
+    return state.unsqueeze(0)
+
+
 def get_screen(env):
     # Transpose it into torch order (CHW).
     screen = env.render(mode='rgb_array')
-    return opt_screen(screen)
+    return screen
 
 
 def opt_screen(I):
@@ -123,7 +129,7 @@ def worker(t, worker_model: ActorCritic, counter, params):
             print("model saved epoch = {0}".format(i))
 
 
-def run_episode(worker_env, state, worker_model, n_steps=300):
+def run_episode(worker_env, state, worker_model, n_steps=500):
     cur_screen = state
     values, logprobs, rewards = [], [], []
     done = False
@@ -132,30 +138,20 @@ def run_episode(worker_env, state, worker_model, n_steps=300):
     prev_state = torch.zeros(worker_model.config.state_shape).float()
     while j < n_steps and done is False:  # C
         j += 1
-        curr_state = opt_screen(cur_screen) - prev_state
-        # curr_state = curr_state.float()
-        policy, value = worker_model(curr_state)  # D
+        policy, value = worker_model(get_state(cur_screen))  # D
         values.append(value)
         logits = policy.view(-1)
         action_dist = torch.distributions.Categorical(logits=logits)
         action = action_dist.sample()  # E
         logprob_ = policy.view(-1)[action]
         logprobs.append(logprob_)
-        prev_state = curr_state
-        cur_screen, reward, done, info = worker_env.step(map_action_to_enviroment(action.detach().numpy()))
+        cur_screen, reward, done, info = worker_env.step(action.detach().numpy())
         if done:
             worker_env.reset()
         else:
             G = value.detach()
         rewards.append(reward)
     return values, logprobs, rewards, G
-
-
-def map_action_to_enviroment(action):
-    if action == 0:
-        return 2
-    else:
-        return 3
 
 
 def update_params(worker_opt, values, logprobs, rewards, G, clc=0.1, gamma=0.95):
@@ -181,7 +177,7 @@ if __name__ == '__main__':
 
     config = NetConfig()
     env = gym.make(config.env_name).unwrapped
-    init_screen = opt_screen(env.reset())
+    init_screen = get_state(env.reset())
     # test_image_plot(env)
     # init_screen = get_screen(env)
     batch_numb, channels, screen_height, screen_width = init_screen.shape
@@ -189,7 +185,7 @@ if __name__ == '__main__':
     config.screen_height = screen_height
     config.screen_width = screen_width
     del init_screen
-    config.n_actions = 2
+    config.n_actions = env.action_space.n
     MasterNode = ActorCritic(config)
     MasterNode.share_memory()  # will allow parameters of models to be shared across processes rather than being copied
     processes = []
@@ -207,7 +203,7 @@ if __name__ == '__main__':
     for p in processes:
         p.terminate()
 
-    print(counter.value, processes[1].exitcode)  # H
+    print(counter.value, processes[0].exitcode)  # H
     MasterNode.save()
     MasterNode.plot_actor_loss()
     MasterNode.plot_crticic_loss()
