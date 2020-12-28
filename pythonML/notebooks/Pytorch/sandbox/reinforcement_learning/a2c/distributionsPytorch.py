@@ -1,6 +1,7 @@
 # https://towardsdatascience.com/5-statistical-functions-in-pytorch-2d75e3dcc1fd
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 
 def count_2(actions):
@@ -48,3 +49,7 @@ if __name__ == '__main__':
     actions = torch.multinomial(a, N, replacement=True)
     print(actions)
     print(len(np.where(actions.detach().numpy() == 2)[0]) / N)
+
+    print(torch.arange(0, 5))
+    print(torch.arange(0, 5) % 3)
+    print(F.one_hot(torch.arange(0, 5) % 3))
