@@ -6,7 +6,7 @@ if __name__ == '__main__':
     env_id = 'MountainCar-v0'  # param ["CartPole-v1", "Acrobot-v1", "MountainCar-v0"]
     value_learning_rate = 0.001
     actor_learning_rate = 0.001
-    gamma = 0.99
+    gamma = 0.95
 
     config_a2c = {
         'env_id': env_id,
@@ -23,4 +23,8 @@ if __name__ == '__main__':
     agent = A2CAgent(config_a2c)
     if training:
         rewards = agent.training_batch(1000, 256)
-    agent.evaluate(True)
+
+    for _ in range(10):
+        agent.evaluate(True, not training)
+
+    agent.close_env()

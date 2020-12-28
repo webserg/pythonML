@@ -77,6 +77,8 @@ class A2CAgent:
         self.actor_network_optimizer = optim.RMSprop(self.actor_network.parameters(),
                                                      lr=config['actor_network']['learning_rate'])
 
+    def close_env(self):
+        self.env.close()
 
     # Hint: use it during training_batch
     def _returns_advantages(self, rewards, dones, values, next_value):
@@ -121,7 +123,7 @@ class A2CAgent:
             The size of a batch
         """
         episode_count = 0
-        actions = np.empty((batch_size,), dtype=np.int)
+        actions = np.empty((batch_size,), dtype=np.long)
         dones = np.empty((batch_size,), dtype=np.bool)
         rewards, values = np.empty((2, batch_size), dtype=np.float)
         observations = np.empty((batch_size,) + self.env.observation_space.shape, dtype=np.float)
@@ -134,7 +136,7 @@ class A2CAgent:
                 observations[i] = observation
                 values[i] = self.value_network(torch.tensor(observation, dtype=torch.float)).detach().numpy()
                 policy = self.actor_network(torch.tensor(observation, dtype=torch.float))
-                actions[i] = torch.multinomial(policy, 1).detach().numpy()
+                actions[i] = torch.multinomial(policy, 1).detach().numpy()[0]
                 observation, rewards[i], dones[i], _ = self.env.step(actions[i])
 
                 if dones[i]:
@@ -179,7 +181,7 @@ class A2CAgent:
         self.actor_network.save(self.config['file_path_actor'])
 
     def optimize_model(self, observations, actions, returns, advantages):
-        actions = F.one_hot(torch.tensor(actions), self.env.action_space.n)
+        actions = F.one_hot(torch.tensor(actions, dtype=torch.long), self.env.action_space.n)
         returns = torch.tensor(returns[:, None], dtype=torch.float)
         advantages = torch.tensor(advantages, dtype=torch.float)
         observations = torch.tensor(observations, dtype=torch.float)
@@ -202,9 +204,12 @@ class A2CAgent:
 
         return loss_value, loss_actor
 
-    def evaluate(self, render=False):
-        self.value_network.load(self.config['file_path_critic'])
-        self.actor_network.load(self.config['file_path_actor'])
+    def evaluate(self, render=False, load=False):
+
+        if load:
+            self.value_network.load(self.config['file_path_critic'])
+            self.actor_network.load(self.config['file_path_actor'])
+
         env = self.env
         observation = env.reset()
         observation = torch.tensor(observation, dtype=torch.float)
@@ -220,7 +225,6 @@ class A2CAgent:
             observation = torch.tensor(observation, dtype=torch.float)
             reward_episode += reward
 
-        env.close()
         if render:
             print(f'Reward: {reward_episode}')
         return reward_episode

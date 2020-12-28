@@ -23,4 +23,8 @@ if __name__ == '__main__':
     agent = A2CAgent(config_a2c)
     if training:
         rewards = agent.training_batch(1000, 256)
-    agent.evaluate(True)
+
+    for _ in range(10):
+        agent.evaluate(True, not training)
+
+    agent.close_env()
