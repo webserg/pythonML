@@ -1,21 +1,26 @@
-# The idea behind GANs is that you have two networks, a generator  𝐺  and a discriminator  𝐷 , competing against each other.
-# The generator makes "fake" data to pass to the discriminator. The discriminator also sees real training data and predicts
+#
+#
+# The idea behind GANs is that you have two networks, a generator  𝐺  and a discriminator  𝐷 , competing against each
+# other.
+# The generator makes "fake" data to pass to the discriminator. The discriminator also sees real training data and
+# predicts
 # if the data it's received is real or fake.
-# The generator is trained to fool the discriminator, it wants to output data that looks as close as possible to real, training data.
+# The generator is trained to fool the discriminator, it wants to output data that looks as close as possible to real,
+# training data.
 # The discriminator is a classifier that is trained to figure out which data is real and which is fake.
-# What ends up happening is that the generator learns to make data that is indistinguishable from real data to the discriminator.
+# What ends up happening is that the generator learns to make data that is indistinguishable from real data to the
+# discriminator.
 #
 
+import pickle as pkl
+
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import matplotlib.pyplot as plt
-import torch.nn.functional as F
-from torchvision import datasets
-import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-import pickle as pkl
+import torchvision.transforms as transforms
+from torchvision import datasets
 
 
 class Discriminator(nn.Module):
@@ -80,7 +85,8 @@ def showOneImage(img):
 if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     batch_size = 64
-    train_data = datasets.MNIST(root='~/.pytorch/MNIST_data/', train=True, download=True, transform=transforms.ToTensor())
+    train_data = datasets.MNIST(root='~/.pytorch/MNIST_data/', train=True, download=True,
+                                transform=transforms.ToTensor())
     train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, num_workers=0)
 
     # Discriminator hyperparams
@@ -210,7 +216,8 @@ if __name__ == '__main__':
             # Print some loss stats
             if batch_i % print_every == 0:
                 # print discriminator and generator loss
-                print('Epoch [{:5d}/{:5d}] | d_loss: {:6.4f} | g_loss: {:6.4f}'.format(epoch + 1, num_epochs, d_loss.item(), g_loss.item()))
+                print('Epoch [{:5d}/{:5d}] | d_loss: {:6.4f} | g_loss: {:6.4f}'.format(epoch + 1, num_epochs,
+                                                                                       d_loss.item(), g_loss.item()))
 
         ## AFTER EACH EPOCH##
         # append discriminator loss and generator loss
