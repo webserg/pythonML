@@ -283,8 +283,6 @@ plt.show()
 print(f"Label: {labels[test_labels[random_inx]]}")
 
 
-# In[ ]:
-
 
 # Get the model predictions
 

@@ -48,5 +48,9 @@ prob = np.diff(cdf)
 plt.plot(centers, samples.size * prob, 'k-', linewidth=2)
 plt.show()
 
+mask = np.random.choice([True, False], 10, p=[0.7, 0.3])
+a = np.ones(10)
+b= np.zeros(10)
+print(a[mask])
 
 
