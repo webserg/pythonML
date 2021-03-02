@@ -1,0 +1,61 @@
+    1  ls -l
+    2  docker run hello-world
+    3  docker build -t twitter-python .
+    4  docker images
+    5  docker run -d -p 8080:8080 d79b9ac0e0b4
+    6  docker container ls
+    7  docker build -t twitter-python .
+    8  docker run -d -p 8080:8080 d79b9ac0e0b4
+    9  docker container ls
+   10  docker images
+   11  docker run -d -p 8080:8080 click==7.1.2
+   12  Flask==1.1.2
+   13  itsdangerous==1.1.0
+   14  Jinja2==2.11.3
+   15  MarkupSafe==1.1.1
+   16  docker run -d -p 8080:8080 88af02f54bce
+   17  docker container ls
+   18  cd /var/lib/docker/containers
+   19  sudo su
+   20  docker build -t twitter-python .
+   21  docker run -d -p 8080:8080 twitter-python
+   22  docker container ls
+   23  sudo su
+   24  docker build -t twitter-python .
+   25  docker run -d -p 8080:8080 twitter-python
+   26  docker container ls
+   27  docker build -t twitter-python .
+   28  docker run -d -p 8080:8080 twitter-python
+   29  docker container ls
+   30  sudo su
+   31  docker stop twitter-python
+   32  docker container stop twitter-python
+   33  docker container ls
+   34  docker stop 9413b732bb45
+   35  docker container ls
+   36  docker run -d -p 5000:8080 twitter-python
+   37  docker container ls
+   38  docker stop c0ef7857e828
+   39  docker container ls
+   40  docker stop c0ef7857e828
+   41  docker container ls
+   42  docker run -d -p 8080:5000 twitter-python
+   43  docker container ls
+   44  docker build -t twitter-python .
+   45  docker run -d -p 5000:8080 twitter-python
+   46  docker container ls
+   47  docker stop 205bd3749d1c
+   48  docker container ls
+   49  docker stop edf2ddd1f9b2
+   50  docker run -d -p 8080:5000 twitter-python
+   51  docker container ls
+   52  docker exec -it ea025d4aac2c
+   53  docker exec -it ea025d4aac2c bash
+   54  docker logs ea025d4aac2c
+   55  docker stop ea025d4aac2c
+   56  docker rm ea025d4aac2c
+   57  docker container ps -a
+   58  docker purge
+   59  docker system prune
+   60  docker container ps -a
+   61   history > ./bashHistory
