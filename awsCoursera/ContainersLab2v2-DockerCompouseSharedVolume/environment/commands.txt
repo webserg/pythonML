@@ -1,0 +1,98 @@
+    1  cd /home/ec2-user/environment
+    2  wget https://aws-tc-largeobjects.s3.us-west-2.amazonaws.com/DEV-AWS-MO-Containers/lab-2-multiple-containers.zip
+    3  unzip lab-2-multiple-containers.zip
+    4  rm lab-2-multiple-containers.zip
+    5  cd ~/environment/resources/service_api
+    6  docker build --tag service-api . 
+    7  docker images
+    8  cd ~/environment/resources/price_api
+    9  docker build --tag price-api . 
+   10  docker images
+   11  docker run -d --name service-api -v my-shared-volume:/contains_your_service_data -p 8080:3000 service-api
+   12  docker volume ls
+   13  docker run -d --name price-api -v my-shared-volume:/contains_your_price_data -p 8081:3000 price-api
+   14  docker volume ls
+   15  docker ps
+   16  curl localhost:3000
+   17  curl localhost:8081
+   18  curl localhost:8081/get-prices
+   19  curl localhost:8080
+   20  curl localhost:8080/get-service-area
+   21  docker exec -it service-api df -h
+   22  docker exec -it price-api df -h
+   23  docker exec -it price-api touch /contains_your_price_data/from_price_api.txt
+   24  docker exec -it price-api ls /contains_your_price_data
+   25  docker exec -it service-api ls /contains_your_service_data
+   26  cd ~/environment/resources/my-data
+   27  docker build --tag my-data . 
+   28  docker images
+   29  docker run -d --name my-shared-data my-data
+   30  docker ps
+   31  docker stop service-api
+   32  docker rm service-api
+   33  docker stop price-api
+   34  docker rm price-api
+   35  docker volume rm my-shared-volume
+   36  docker volume ls
+   37  cd ~/environment/resources/service_api
+   38  docker build --tag service-api . 
+   39  cd ~/environment/resources/price_api
+   40  docker build --tag price-api . 
+   41  docker run -d --name service-api --volumes-from my-shared-data -p 8080:3000 service-api
+   42  docker exec -it service-api ls /
+   43  docker run -d --name price-api --volumes-from my-shared-data -p 8081:3000 price-api
+   44  docker exec -it price-api ls /
+   45  docker exec -it service-api cat /my_amazing_shared_folder/service_data.json
+   46  docker exec -it price-api cat /my_amazing_shared_folder/price_data.json 
+   47  curl localhost:8080/get-service-area
+   48  curl localhost:8081/get-prices
+   49  cd ~/enviroment
+   50  cd ~/envirnoment
+   51  cd ~/environment/
+   52  docker-compose up
+   53  cd ./resources/
+   54  ls -l
+   55  docker-compose up .
+   56  pip install docker-compose
+   57  pip install --upgrade pip
+   58  sudo pip install --upgrade pip
+   59  sudo pip install docker-compose
+   60  pip install docker-compose
+   61  pip3
+   62  sudo pip3 install docker-compose
+   63  pip3 install docker-compose
+   64  docker-compose up .
+   65  docker volume create --name=my-named-shared-data
+   66  docker-compose up .
+   67  docker-compose up
+   68  docker stop price-api
+   69  docker rm price-api
+   70  docker stop service-api
+   71  docker rm service-api
+   72  docker stop my-shared-data
+   73  docker rm my-data
+   74  docker rm my-shared-data
+   75  docker volume ls
+   76  docker volume rm 4a82c8848b351ded8242312d58bad19ff53d916de82b4114a82cb34768f0aaee
+   77  docker images
+   78  docker ps -a
+   79  docker stop resources_price-api_1
+   80  docker stop resources_service-api_1
+   81  docker rm resources_service-api_1
+   82  cd ~/environment/resources/my-data
+   83  rm Dockerfile
+   84  curl localhost:8080
+   85  docker inspect my-named-shared-data
+   86  cd ~/environment/resources/
+   87  sudo ls /var/lib/docker/volumes/my-named-shared-data/_data
+   88  sudo cp -r my-data /var/lib/docker/volumes/my-named-shared-data/_data
+   89  sudo ls /var/lib/docker/volumes/my-named-shared-data/_data/my-data
+   90  docker-compose up
+   91  docker-compose start
+   92  docker ps
+   93  curl localhost:8080/get-service-area
+   94  docker exec -it resources_price-api_1 cat /contains_your_price_data/my-data/price_data.json
+   95  curl localhost:8081/get-prices
+   96  docker-compose down
+   97  cd ../
+   98  history > commands.txt

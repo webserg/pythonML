@@ -1,0 +1,27 @@
+version: "3.7"
+services:
+  price-api:
+    image: price-api
+    networks:
+      - backend
+    ports:
+      - "8081:3000"
+    volumes:
+      - my-named-shared-data:/contains_your_price_data
+
+  service-api:
+    image: service-api
+    networks:
+      - backend
+    ports:
+      - "8080:3000"
+    volumes:
+      - my-named-shared-data:/contains_your_service_area_data
+
+volumes:
+  my-named-shared-data:
+    external: "true"
+  
+networks:
+  backend:
+    driver: bridge
